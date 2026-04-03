@@ -862,21 +862,68 @@ function stopperTir() {
     // ── MODE TERMINALE : Tir termine la séquence → enregistrer + chaîner course ──
     _enregistrerSequence(S.courseDureMs, tirDureMs, now);
   } else {
-    // ── MODE 1ÈRE : Tir commence la séquence → stocker durée tir, chaîner course ──
-    // Sauvegarder l'état cibles du tir AVANT de réinitialiser
+    // ── MODE 1ÈRE : Tir1→Course1→Tir2→Course2→Tir3→Course3→Tir4(FIN) ──
+    // Sauvegarder l'état cibles du tir
     S.tirDureMs = tirDureMs;
     S.tirCiblesEtat = S.ciblesEtat.slice();
     S.tirCiblesRang = S.ciblesRang ? S.ciblesRang.slice() : [];
-    document.getElementById('cibles-bloc').className='cibles-bloc';
-    var n=S.seqIdx+1;
-    S.phase='course';
-    setPhaseBanner('course','🏃 COURSE '+n);
-    document.getElementById('chrono-lbl').className='chrono-lbl course';
-    document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
-    setBtn('red','⏹ STOP — FIN COURSE '+n);
-    showToast('🏃 Course '+n+' !','org');
-    majRecap();
+
+    // Dernier tir (Tir 4) ? → fin de l'épreuve directement, pas de Course 4
+    var estDernierTir = (S.seqIdx === S.nbSeq - 1);
+    if (estDernierTir) {
+      // Enregistrer le tir final seul (course = '00:00')
+      _enregistrerSequenceTirSeul(tirDureMs, now);
+    } else {
+      // Enchaîner sur la course suivante
+      document.getElementById('cibles-bloc').className='cibles-bloc';
+      var n=S.seqIdx+1;
+      S.phase='course';
+      setPhaseBanner('course','🏃 COURSE '+n);
+      document.getElementById('chrono-lbl').className='chrono-lbl course';
+      document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
+      setBtn('red','⏹ STOP — FIN COURSE '+n);
+      showToast('🏃 Course '+n+' !','org');
+      majRecap();
+    }
   }
+}
+
+/* ── Enregistrer le dernier tir seul (1ères : Tir 4 sans Course 4) ── */
+function _enregistrerSequenceTirSeul(tirDureMs, now) {
+  var etat = S.tirCiblesEtat;
+  var rang  = S.tirCiblesRang;
+  var nb=0, detail=[];
+  for (var i=0; i<NB_CIB; i++) {
+    var v = etat ? etat[i] : null;
+    var t = (v!==null && v && v.touche);
+    if(t) nb++;
+    detail.push(t);
+  }
+  S.sequences.push({
+    course: '--',      // pas de course pour le dernier tir
+    tir:    msToMmss(tirDureMs),
+    cibles: nb,
+    detail: detail,
+    rang:   rang ? rang.slice() : []
+  });
+
+  document.getElementById('cibles-bloc').className='cibles-bloc';
+  S.seqIdx++;
+  majDots(); majRecap();
+  showDetailToggle();
+
+  // Fin de l'épreuve
+  var finalMs = _now() - S.chronoGlobalStart;
+  stopChrono();
+  _setChronoDisplay(msToMmss(finalMs), msToDix(finalMs), 'tir');
+  S.phase='fini';
+  setPhaseBanner('fini','🎉 BRAVO, C\'EST FINI !');
+  document.getElementById('chrono-lbl').className='chrono-lbl tir';
+  document.getElementById('chrono-lbl').textContent='TEMPS TOTAL';
+  document.getElementById('btn-action').style.display='none';
+  document.getElementById('btn-envoyer').style.display='block';
+  showToast('🎉 L\'épreuve est terminée !');
+  if (_detailOpen) renderDetailView();
 }
 
 /* ── Enregistrer une séquence complète et enchaîner ─────────── */
@@ -1045,7 +1092,11 @@ document.getElementById('btn-envoyer').addEventListener('click', function(){
   var s=S.sequences;
   var n=s.length;
   var courseTimes=[]; var tirTimes=[]; var tth=0;
-  for(var i=0;i<n;i++){ courseTimes.push(s[i].course); tirTimes.push(s[i].tir); tth+=s[i].cibles; }
+  for(var i=0;i<n;i++){
+    if(s[i].course && s[i].course!=='--') courseTimes.push(s[i].course);
+    tirTimes.push(s[i].tir);
+    tth+=s[i].cibles;
+  }
   var tc=addTemps(courseTimes);
   var tt=addTemps(tirTimes);
   var totalMs = _now() - S.chronoGlobalStart;
@@ -1092,18 +1143,25 @@ function majDots() {
 function majRecap() {
   var h='';
   var nb = S.nbSeq || 3;
+  var modeInv = S.modeInverse || false;
   for (var i=0;i<nb;i++) {
     var done=i<S.seqIdx, cur=i===S.seqIdx;
+    var isDernierTirSeul = modeInv && (i===nb-1); // dernier slot 1ères = tir seul
+    var label = isDernierTirSeul ? '🎯 Tir final' : 'Séquence '+(i+1);
     var vals='<div class="recap-data">—</div>';
     if (done&&S.sequences[i]) {
       var sq=S.sequences[i];
-      vals='<div class="recap-data">⏱<b>'+sq.course+'</b> 🔫<b>'+sq.tir+'</b> 🎯<b>'+sq.cibles+'/5</b></div>';
+      if (isDernierTirSeul) {
+        vals='<div class="recap-data">🔫<b>'+sq.tir+'</b> 🎯<b>'+sq.cibles+'/5</b></div>';
+      } else {
+        vals='<div class="recap-data">⏱<b>'+sq.course+'</b> 🔫<b>'+sq.tir+'</b> 🎯<b>'+sq.cibles+'/5</b></div>';
+      }
     } else if (cur&&S.phase!=='idle') {
       vals='<div class="recap-data" style="color:var(--ora)">En cours...</div>';
     }
     h+='<div class="recap-row '+(done?'done':cur?'cur':'')+'">'
       +'<span class="recap-seq-name '+(done?'done':cur?'cur':'')+'">'
-      +(done?'✅':cur?'▶':'⏳')+' Séquence '+(i+1)+'</span>'+vals+'</div>';
+      +(done?'✅':cur?'▶':'⏳')+' '+label+'</span>'+vals+'</div>';
   }
   document.getElementById('recap-bloc').innerHTML=h;
 }
@@ -1155,10 +1213,13 @@ function renderDetailView() {
   h += '<div class="detail-section">';
   h += '<div class="detail-section-head course">🏃 Temps de course</div>';
   h += '<div class="detail-rows">';
-  for (var i = 0; i < seqs.length; i++) { totCourseS += mmss2s(seqs[i].course);
+  var nbCoursesAffichees = modeInv ? nbSeqTotal-1 : nbSeqTotal; // 1ères: 3 courses, Term: 3 courses
+  for (var i = 0; i < seqs.length; i++) {
+    if (seqs[i].course === '--') continue; // tir seul, pas de course
+    totCourseS += mmss2s(seqs[i].course);
     h += '<div class="detail-row"><span class="detail-row-lbl">Course '+(i+1)+'</span><span class="detail-row-val ora">'+seqs[i].course+'</span></div>';
   }
-  for (var i = seqs.length; i < nbSeqTotal; i++) {
+  for (var i = seqs.length; i < nbCoursesAffichees; i++) {
     h += '<div class="detail-row"><span class="detail-row-lbl">Course '+(i+1)+'</span><span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span></div>';
   }
   h += '<div class="detail-row total-row"><span class="detail-row-lbl" style="font-weight:900;color:var(--ora)">Total course</span><span class="detail-row-val ora">'+s2mmss(totCourseS)+'</span></div>';
@@ -1169,10 +1230,12 @@ function renderDetailView() {
   h += '<div class="detail-section-head tir">🔫 Temps de tir &amp; cibles</div>';
   h += '<div class="detail-rows">';
   for (var i = 0; i < seqs.length; i++) { totTirS += mmss2s(seqs[i].tir);
-    h += '<div class="detail-row"><span class="detail-row-lbl">Tir '+(i+1)+'</span><span class="detail-row-val cyan">'+seqs[i].tir+'</span></div>';
+    var tirLbl = (modeInv && i===nbSeqTotal-1) ? 'Tir final (4)' : 'Tir '+(i+1);
+    h += '<div class="detail-row"><span class="detail-row-lbl">'+tirLbl+'</span><span class="detail-row-val cyan">'+seqs[i].tir+'</span></div>';
   }
   for (var i = seqs.length; i < nbSeqTotal; i++) {
-    h += '<div class="detail-row"><span class="detail-row-lbl">Tir '+(i+1)+'</span><span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span></div>';
+    var tirLbl = (modeInv && i===nbSeqTotal-1) ? 'Tir final (4)' : 'Tir '+(i+1);
+    h += '<div class="detail-row"><span class="detail-row-lbl">'+tirLbl+'</span><span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span></div>';
   }
   h += '<div class="detail-row total-row"><span class="detail-row-lbl" style="font-weight:900;color:var(--cyan)">Total tir</span><span class="detail-row-val cyan">'+s2mmss(totTirS)+'</span></div>';
   h += '</div>';
