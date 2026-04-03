@@ -398,10 +398,6 @@ canvas.evo-chart{max-width:100%;display:block;}
       <label>Classe *</label>
       <select id="s-classe">
         <option value="">-- Ta classe --</option>
-        <option>6ème A</option><option>6ème B</option>
-        <option>5ème A</option><option>5ème B</option>
-        <option>4ème A</option><option>4ème B</option>
-        <option>3ème A</option><option>3ème B</option>
         <option>Term A</option><option>Term B</option><option>Term C</option>
       </select>
     </div>
@@ -1300,7 +1296,8 @@ function renderProf() {
   filt=filt.slice().sort(function(a,b){
     var na=(a.nom||'').toLowerCase()+' '+(a.prenom||'').toLowerCase();
     var nb=(b.nom||'').toLowerCase()+' '+(b.prenom||'').toLowerCase();
-    return na<nb?-1:na>nb?1:0;
+    if(na<nb) return -1; if(na>nb) return 1;
+    return (a.date+a.heure)<(b.date+b.heure)?-1:1;
   });
 
   var n=filt.length;
