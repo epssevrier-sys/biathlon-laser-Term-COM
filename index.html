@@ -243,6 +243,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Ar
 .cnx-status.err {background:#fde8e8;color:#a01c28;}
 .cnx-status.load{background:#fff3cd;color:#856404;}
 
+/* Onglets de classe */
+.classe-tabs{display:flex;background:#fff;border-bottom:2px solid #dde6f0;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.classe-tabs::-webkit-scrollbar{display:none;}
+.ctab{flex-shrink:0;padding:.65rem 1.1rem;font-size:.82rem;font-weight:800;
+  color:#aaa;cursor:pointer;border:none;background:none;font-family:inherit;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:color .2s,border-color .2s;white-space:nowrap;}
+.ctab.active{color:#1a3a5c;border-bottom-color:#1a3a5c;}
+.ctab .ctab-count{display:inline-block;background:#e8f0fb;color:#1a3a5c;
+  font-size:.65rem;font-weight:900;padding:.05rem .35rem;border-radius:10px;
+  margin-left:.35rem;min-width:18px;text-align:center;}
+.ctab.active .ctab-count{background:#1a3a5c;color:#fff;}
+
 /* Tabs prof */
 .tea-tabs{display:flex;background:#fff;border-bottom:2px solid #dde6f0;}
 .ttab{flex:1;padding:.75rem;text-align:center;font-size:.8rem;font-weight:700;
@@ -451,10 +465,16 @@ canvas.evo-chart{max-width:100%;display:block;}
 
   <!-- TAB LISTE -->
   <div id="tab-content-liste">
+    <!-- Onglets de classe -->
+    <div class="classe-tabs" id="classe-tabs">
+      <button class="ctab active" data-classe="" onclick="setClasseTab('')">Toutes <span class="ctab-count" id="ctab-count-all">0</span></button>
+      <button class="ctab" data-classe="Term A" onclick="setClasseTab('Term A')">Term A <span class="ctab-count" id="ctab-count-a">0</span></button>
+      <button class="ctab" data-classe="Term B" onclick="setClasseTab('Term B')">Term B <span class="ctab-count" id="ctab-count-b">0</span></button>
+      <button class="ctab" data-classe="Term C" onclick="setClasseTab('Term C')">Term C <span class="ctab-count" id="ctab-count-c">0</span></button>
+    </div>
     <div class="tea-body">
       <div class="stats-g" id="t-stats"></div>
       <div class="ctrl-r">
-        <select class="sel" id="t-filter-classe"><option value="">Toutes les classes</option></select>
         <select class="sel" id="t-filter-date"><option value="">Toutes les dates</option></select>
         <select class="sel" id="t-filter-eleve"><option value="">Tous les élèves</option></select>
         <button class="bsm org" id="btn-export">⬇️ CSV</button>
@@ -1231,6 +1251,19 @@ function useFallbackProf(statusEl) {
 /* ══════════════════════════════════════════════════════════════
    PROF — TABLEAU RÉSULTATS
 ══════════════════════════════════════════════════════════════ */
+var _classeActive = ''; // '' = toutes
+
+function setClasseTab(classe) {
+  _classeActive = classe;
+  // Mettre à jour l'apparence des onglets
+  var tabs = document.getElementById('classe-tabs').querySelectorAll('.ctab');
+  for (var i=0; i<tabs.length; i++) {
+    tabs[i].classList.toggle('active', tabs[i].getAttribute('data-classe') === classe);
+  }
+  syncEleveFilter();
+  renderProf();
+}
+
 function getArr(classeF, dateF, eleveF) {
   var arr=[];
   for (var k in allData) arr.push(allData[k]);
@@ -1240,7 +1273,6 @@ function getArr(classeF, dateF, eleveF) {
   return arr;
 }
 
-document.getElementById('t-filter-classe').addEventListener('change', function(){ syncEleveFilter(); renderProf(); });
 document.getElementById('t-filter-date').addEventListener('change', renderProf);
 document.getElementById('t-filter-eleve').addEventListener('change', renderProf);
 document.getElementById('btn-export').addEventListener('click', exportCSV);
@@ -1251,8 +1283,7 @@ document.getElementById('btn-vider').addEventListener('click', function(){
 });
 
 function syncEleveFilter() {
-  var classeSel=document.getElementById('t-filter-classe').value;
-  var arr=getArr(classeSel,'','');
+  var arr=getArr(_classeActive,'','');
   // Dates
   var dates=[];
   for (var i=0;i<arr.length;i++) if(arr[i].date&&dates.indexOf(arr[i].date)<0) dates.push(arr[i].date);
@@ -1274,25 +1305,27 @@ function syncEleveFilter() {
   for (var i=0;i<eleves.length;i++) eleveEl.innerHTML+='<option'+(eleves[i]===eleveSel?' selected':'')+'>'+eleves[i]+'</option>';
 }
 
+function majCompteursTabs() {
+  var allArr=[]; for(var k in allData) allArr.push(allData[k]);
+  var counts={'':allArr.length,'Term A':0,'Term B':0,'Term C':0};
+  for(var i=0;i<allArr.length;i++){
+    var cl=allArr[i].classe;
+    if(counts[cl]!==undefined) counts[cl]++;
+  }
+  document.getElementById('ctab-count-all').textContent=counts[''];
+  document.getElementById('ctab-count-a').textContent=counts['Term A'];
+  document.getElementById('ctab-count-b').textContent=counts['Term B'];
+  document.getElementById('ctab-count-c').textContent=counts['Term C'];
+}
+
 function renderProf() {
-  var classeSel=document.getElementById('t-filter-classe').value;
   var dateSel=document.getElementById('t-filter-date').value;
   var eleveSel=document.getElementById('t-filter-eleve').value;
 
-  // Mise à jour filtre classe
-  var allArr=[];
-  for (var k in allData) allArr.push(allData[k]);
-  var classes=[];
-  for (var i=0;i<allArr.length;i++) if(allArr[i].classe&&classes.indexOf(allArr[i].classe)<0) classes.push(allArr[i].classe);
-  classes.sort();
-  var cEl=document.getElementById('t-filter-classe');
-  var cSel=cEl.value;
-  cEl.innerHTML='<option value="">Toutes les classes</option>';
-  for (var i=0;i<classes.length;i++) cEl.innerHTML+='<option'+(classes[i]===cSel?' selected':'')+'>'+classes[i]+'</option>';
-
+  majCompteursTabs();
   syncEleveFilter();
 
-  var filt=getArr(classeSel,dateSel,eleveSel);
+  var filt=getArr(_classeActive,dateSel,eleveSel);
   filt=filt.slice().sort(function(a,b){
     var na=(a.nom||'').toLowerCase()+' '+(a.prenom||'').toLowerCase();
     var nb=(b.nom||'').toLowerCase()+' '+(b.prenom||'').toLowerCase();
@@ -1351,10 +1384,9 @@ function renderProf() {
 
 /* ── EXPORT CSV ─────────────────────────────────────────────── */
 function exportCSV() {
-  var classeSel=document.getElementById('t-filter-classe').value;
   var dateSel=document.getElementById('t-filter-date').value;
   var eleveSel=document.getElementById('t-filter-eleve').value;
-  var filt=getArr(classeSel,dateSel,eleveSel);
+  var filt=getArr(_classeActive,dateSel,eleveSel);
   if (!filt.length){ showToast('Aucun résultat','org'); return; }
   var csv='"Prénom";"Nom";"Classe";"Date";"Heure";"Course 1";"Tir 1";"Cibles 1";"Course 2";"Tir 2";"Cibles 2";"Course 3";"Tir 3";"Cibles 3";"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
   for (var i=0;i<filt.length;i++){
