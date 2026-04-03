@@ -1460,8 +1460,10 @@ function renderProf() {
   var thead = document.getElementById('t-head');
   var thH = '<tr><th>Élève</th><th>Classe</th><th class="c">Date/Heure</th>';
   for(var j=0;j<nbSeqAffiche;j++){
+    var estDernierTirSeul = (modeAffiche==='1ere' && j===nbSeqAffiche-1);
     if(modeAffiche==='1ere'){
-      thH += '<th class="c">Tir '+(j+1)+'</th><th class="c">Cib.'+(j+1)+'</th><th class="c">Course '+(j+1)+'</th>';
+      thH += '<th class="c">Tir '+(j+1)+'</th><th class="c">Cib.'+(j+1)+'</th>';
+      if(!estDernierTirSeul) thH += '<th class="c">Course '+(j+1)+'</th>';
     } else {
       thH += '<th class="c">Course '+(j+1)+'</th><th class="c">Tir '+(j+1)+'</th><th class="c">Cib.'+(j+1)+'</th>';
     }
@@ -1469,7 +1471,9 @@ function renderProf() {
   thH += '<th class="c">Tot.Course</th><th class="c">Tot.Tir</th><th class="c">Tot.Cibles</th><th class="c">Tps Total</th></tr>';
   thead.innerHTML = thH;
 
-  var nbCols = 3 + nbSeqAffiche*3 + 4;
+  // Calcul nombre de colonnes pour colspan vide
+  var nbColsSeq = modeAffiche==='1ere' ? (nbSeqAffiche*2 + (nbSeqAffiche-1)) : nbSeqAffiche*3;
+  var nbCols = 3 + nbColsSeq + 4;
   document.getElementById('t-stats').innerHTML=
     '<div class="stat-c"><div class="stat-n">'+n+'</div><div class="stat-l">Élèves</div></div>'+
     '<div class="stat-c"><div class="stat-n">'+mH+'/'+maxCib+'</div><div class="stat-l">Moy. cibles</div></div>'+
@@ -1512,10 +1516,16 @@ function renderProf() {
     // Séquences — afficher selon le mode de l'élève
     for (var j=0;j<nbSeqAffiche;j++){
       var sq = r.sequences ? r.sequences[j] : null;
+      var estDernierTirSeul = (rMode==='1ere' && j===nbSeqAffiche-1);
       if (!sq) {
-        h+='<td class="c">—</td><td class="c">—</td><td class="c">—</td>';
+        if(estDernierTirSeul){
+          h+='<td class="c">—</td><td class="c">—</td>';
+        } else {
+          h+='<td class="c">—</td><td class="c">—</td><td class="c">—</td>';
+        }
       } else if (rMode==='1ere') {
-        h+='<td class="c">'+sq.tir+'</td><td class="c">'+buildCibBloc(sq)+'</td><td class="c">'+sq.course+'</td>';
+        h+='<td class="c">'+sq.tir+'</td><td class="c">'+buildCibBloc(sq)+'</td>';
+        if(!estDernierTirSeul) h+='<td class="c">'+sq.course+'</td>';
       } else {
         h+='<td class="c">'+sq.course+'</td><td class="c">'+sq.tir+'</td><td class="c">'+buildCibBloc(sq)+'</td>';
       }
