@@ -412,6 +412,7 @@ canvas.evo-chart{max-width:100%;display:block;}
       <label>Classe *</label>
       <select id="s-classe">
         <option value="">-- Ta classe --</option>
+        <option>1ère A</option><option>1ère B</option><option>1ère C</option>
         <option>Term A</option><option>Term B</option><option>Term C</option>
       </select>
     </div>
@@ -468,6 +469,9 @@ canvas.evo-chart{max-width:100%;display:block;}
     <!-- Onglets de classe -->
     <div class="classe-tabs" id="classe-tabs">
       <button class="ctab active" data-classe="" onclick="setClasseTab('')">Toutes <span class="ctab-count" id="ctab-count-all">0</span></button>
+      <button class="ctab" data-classe="1ère A" onclick="setClasseTab('1ère A')">1ère A <span class="ctab-count" id="ctab-count-1a">0</span></button>
+      <button class="ctab" data-classe="1ère B" onclick="setClasseTab('1ère B')">1ère B <span class="ctab-count" id="ctab-count-1b">0</span></button>
+      <button class="ctab" data-classe="1ère C" onclick="setClasseTab('1ère C')">1ère C <span class="ctab-count" id="ctab-count-1c">0</span></button>
       <button class="ctab" data-classe="Term A" onclick="setClasseTab('Term A')">Term A <span class="ctab-count" id="ctab-count-a">0</span></button>
       <button class="ctab" data-classe="Term B" onclick="setClasseTab('Term B')">Term B <span class="ctab-count" id="ctab-count-b">0</span></button>
       <button class="ctab" data-classe="Term C" onclick="setClasseTab('Term C')">Term C <span class="ctab-count" id="ctab-count-c">0</span></button>
@@ -482,7 +486,7 @@ canvas.evo-chart{max-width:100%;display:block;}
       </div>
       <div class="tbl-w">
         <table>
-          <thead><tr>
+          <thead id="t-head"><tr>
             <th>Élève</th><th>Classe</th><th class="c">Date/Heure</th>
             <th class="c">Course 1</th><th class="c">Tir 1</th><th class="c">Cibles 1</th>
             <th class="c">Course 2</th><th class="c">Tir 2</th><th class="c">Cibles 2</th>
@@ -550,9 +554,25 @@ var firebaseConfig = {
 };
 
 var PWD     = '1234';
-var NB_SEQ  = 3;
 var NB_CIB  = 5;
 var KEY     = 'biathlon_v7';
+
+// Retourne le nombre de séquences selon la classe
+function getNbSeq(classe) {
+  return estPremiere(classe) ? 4 : 3;
+}
+// Terminales : Course → Tir (3 séquences)
+function estTerminale(classe) {
+  return classe && classe.indexOf('Term') === 0;
+}
+// 1ères : Tir → Course (4 séquences)
+function estPremiere(classe) {
+  return classe && (classe.indexOf('1ère') === 0 || classe.indexOf('1ere') === 0 || classe.indexOf('1re') === 0);
+}
+// Première phase : 'tir' pour 1ères, 'course' pour Terminales
+function premierePhase(classe) {
+  return estPremiere(classe) ? 'tir' : 'course';
+}
 
 /* ── ÉTAT ───────────────────────────────────────────────────── */
 var S = {
@@ -741,9 +761,13 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
   if (!c){ showToast('⚠️ Sélectionne ta classe !','org'); return; }
   S.prenom=p; S.nom=document.getElementById('s-nom').value.trim(); S.classe=c;
   S.seqIdx=0; S.phase='idle'; S.sequences=[];
+  S.nbSeq = getNbSeq(c);
+  S.modeInverse = estPremiere(c); // true = Tir→Course (1ères)
   S.chronoGlobalStart=0; S.phaseStart=0;
   _detailOpen=false;
   goPage('p-seq');
+  var typeLabel = S.modeInverse ? '▶ DÉMARRER TIR 1' : '▶ DÉMARRER LA COURSE';
+  var modeLabel = S.modeInverse ? '🎯 Biathlon — Tir en premier' : '🏃 Biathlon — Course en premier';
   document.getElementById('seq-eleve-lbl').textContent=p+(S.nom?' '+S.nom:'')+' · '+c;
   // Réinitialiser la vue détail
   document.getElementById('seq-main-view').style.display='';
@@ -753,7 +777,7 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
   document.getElementById('btn-detail-toggle').textContent='📋 Détail';
   majDots(); majRecap();
   resetChronoUI();
-  setBtn('green','▶ DÉMARRER LA COURSE');
+  setBtn('green', S.modeInverse ? '▶ DÉMARRER TIR 1' : '▶ DÉMARRER LA COURSE');
   document.getElementById('btn-envoyer').style.display='none';
   document.getElementById('btn-action').style.display='block';
 });
@@ -762,7 +786,9 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
    BOUTON PRINCIPAL — logique de séquence
 ══════════════════════════════════════════════════════════════ */
 document.getElementById('btn-action').addEventListener('click', function(){
-  if (S.phase==='idle')        demarrerCourse();
+  if (S.phase==='idle') {
+    if (S.modeInverse) demarrerTir(); else demarrerCourse();
+  }
   else if (S.phase==='course') stopperCourse();
   else if (S.phase==='tir')    stopperTir();
 });
@@ -771,11 +797,8 @@ document.getElementById('btn-action').addEventListener('click', function(){
 function demarrerCourse() {
   S.phase='course';
   var n=S.seqIdx+1;
-  // Démarre le chrono global UNE SEULE FOIS (course 1)
-  if (S.seqIdx===0) {
-    lancerChronoGlobal();
-  }
-  // Note le début de cette phase
+  // Démarre le chrono global UNE SEULE FOIS (première phase)
+  if (S.seqIdx===0 && !S.modeInverse) lancerChronoGlobal();
   S.phaseStart = _now();
   setPhaseBanner('course','🏃 COURSE '+n);
   document.getElementById('chrono-lbl').className='chrono-lbl course';
@@ -785,21 +808,16 @@ function demarrerCourse() {
   majRecap();
 }
 
-/* ── Stopper course → démarrer tir INSTANTANÉMENT ────────────── */
-function stopperCourse() {
-  var now = _now();
-  // Durée exacte de cette course = now - début de phase
-  S.courseDureMs = now - S.phaseStart;
-  // Le tir commence exactement maintenant — zéro latence
-  S.phaseStart = now;
-  // Le chrono global CONTINUE de tourner sans interruption
-
+/* ── Démarrer tir (1ères : phase initiale ou après course) ─── */
+function demarrerTir() {
   S.phase='tir';
+  var n=S.seqIdx+1;
+  // Démarre le chrono global UNE SEULE FOIS (première phase pour les 1ères)
+  if (S.seqIdx===0 && S.modeInverse) lancerChronoGlobal();
+  S.phaseStart = _now();
   S.ciblesEtat=[null,null,null,null,null];
   S.ciblesRang=[];
   afficherCibles();
-
-  var n=S.seqIdx+1;
   setPhaseBanner('tir','🔫 TIR '+n);
   document.getElementById('chrono-lbl').className='chrono-lbl tir';
   document.getElementById('chrono-lbl').textContent='TIR '+n+' EN COURS';
@@ -808,47 +826,115 @@ function stopperCourse() {
   majRecap();
 }
 
-/* ── Stopper tir → enregistrer + enchaîner DIRECTEMENT ─────── */
+/* ── Stopper course → enchaîner selon le mode ────────────────── */
+function stopperCourse() {
+  var now = _now();
+  var courseDureMs = now - S.phaseStart;
+  S.phaseStart = now;
+
+  if (!S.modeInverse) {
+    // ── MODE TERMINALE : Course→Tir (on stocke la durée course, on passe au tir) ──
+    S.courseDureMs = courseDureMs;
+    S.phase='tir';
+    S.ciblesEtat=[null,null,null,null,null];
+    S.ciblesRang=[];
+    afficherCibles();
+    var n=S.seqIdx+1;
+    setPhaseBanner('tir','🔫 TIR '+n);
+    document.getElementById('chrono-lbl').className='chrono-lbl tir';
+    document.getElementById('chrono-lbl').textContent='TIR '+n+' EN COURS';
+    document.getElementById('cibles-bloc').className='cibles-bloc show';
+    setBtn('cyan','⏹ STOP — FIN TIR '+n);
+    majRecap();
+  } else {
+    // ── MODE 1ÈRE : Tir déjà fait, Course termine la séquence → enregistrer ──
+    _enregistrerSequence(S.tirDureMs, courseDureMs, now);
+  }
+}
+
+/* ── Stopper tir → enchaîner selon le mode ─────────────────── */
 function stopperTir() {
   var now = _now();
-  // Durée exacte du tir
   var tirDureMs = now - S.phaseStart;
+  S.phaseStart = now;
+
+  if (!S.modeInverse) {
+    // ── MODE TERMINALE : Tir termine la séquence → enregistrer + chaîner course ──
+    _enregistrerSequence(S.courseDureMs, tirDureMs, now);
+  } else {
+    // ── MODE 1ÈRE : Tir commence la séquence → stocker durée tir, chaîner course ──
+    // Sauvegarder l'état cibles du tir AVANT de réinitialiser
+    S.tirDureMs = tirDureMs;
+    S.tirCiblesEtat = S.ciblesEtat.slice();
+    S.tirCiblesRang = S.ciblesRang ? S.ciblesRang.slice() : [];
+    document.getElementById('cibles-bloc').className='cibles-bloc';
+    var n=S.seqIdx+1;
+    S.phase='course';
+    setPhaseBanner('course','🏃 COURSE '+n);
+    document.getElementById('chrono-lbl').className='chrono-lbl course';
+    document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
+    setBtn('red','⏹ STOP — FIN COURSE '+n);
+    showToast('🏃 Course '+n+' !','org');
+    majRecap();
+  }
+}
+
+/* ── Enregistrer une séquence complète et enchaîner ─────────── */
+function _enregistrerSequence(courseDureMs, tirDureMs, now) {
+  // Pour les 1ères, les cibles sont dans S.tirCiblesEtat/Rang
+  // Pour les Terminales, elles sont dans S.ciblesEtat/Rang
+  var etat = S.modeInverse ? S.tirCiblesEtat : S.ciblesEtat;
+  var rang  = S.modeInverse ? S.tirCiblesRang : S.ciblesRang;
 
   var nb=0, detail=[];
   for (var i=0; i<NB_CIB; i++) {
-    var v=S.ciblesEtat[i];
-    var t=(v!==null&&v.touche);
+    var v = etat ? etat[i] : null;
+    var t = (v!==null && v && v.touche);
     if(t) nb++;
     detail.push(t);
   }
   S.sequences.push({
-    course: msToMmss(S.courseDureMs),
+    course: msToMmss(courseDureMs),
     tir:    msToMmss(tirDureMs),
     cibles: nb,
     detail: detail,
-    rang:   S.ciblesRang ? S.ciblesRang.slice() : []
+    rang:   rang ? rang.slice() : []
   });
 
   document.getElementById('cibles-bloc').className='cibles-bloc';
   S.seqIdx++;
   majDots(); majRecap();
-  showDetailToggle(); // dès la 1ère séquence terminée
+  showDetailToggle();
 
-  if (S.seqIdx < NB_SEQ) {
-    // ── Enchaînement IMMÉDIAT sur la course suivante ──────────
-    // Le chrono continue de tourner, on note juste le nouveau phaseStart
+  if (S.seqIdx < S.nbSeq) {
+    // Enchaîner sur la prochaine séquence
     S.phaseStart = now;
-    S.phase='course';
-    var n=S.seqIdx+1;
-    setPhaseBanner('course','🏃 COURSE '+n);
-    document.getElementById('chrono-lbl').className='chrono-lbl course';
-    document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
-    document.getElementById('cibles-bloc').className='cibles-bloc';
-    setBtn('red','⏹ STOP — FIN COURSE '+n);
-    showToast('🏃 Course '+n+' !','org');
+    var n = S.seqIdx+1;
+    if (S.modeInverse) {
+      // 1ères : prochaine séquence commence par un TIR
+      S.phase='tir';
+      S.ciblesEtat=[null,null,null,null,null];
+      S.ciblesRang=[];
+      afficherCibles();
+      setPhaseBanner('tir','🔫 TIR '+n);
+      document.getElementById('chrono-lbl').className='chrono-lbl tir';
+      document.getElementById('chrono-lbl').textContent='TIR '+n+' EN COURS';
+      document.getElementById('cibles-bloc').className='cibles-bloc show';
+      setBtn('cyan','⏹ STOP — FIN TIR '+n);
+      showToast('🎯 Tir '+n+' !','org');
+    } else {
+      // Terminales : prochaine séquence commence par une COURSE
+      S.phase='course';
+      setPhaseBanner('course','🏃 COURSE '+n);
+      document.getElementById('chrono-lbl').className='chrono-lbl course';
+      document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
+      document.getElementById('cibles-bloc').className='cibles-bloc';
+      setBtn('red','⏹ STOP — FIN COURSE '+n);
+      showToast('🏃 Course '+n+' !','org');
+    }
+    majRecap();
   } else {
-    // ── Fin de la course complète ─────────────────────────────
-    // Figer l'affichage sur le temps final AVANT d'arrêter le rAF
+    // Fin de l'épreuve complète
     var finalMs = _now() - S.chronoGlobalStart;
     stopChrono();
     _setChronoDisplay(msToMmss(finalMs), msToDix(finalMs), 'course');
@@ -858,8 +944,7 @@ function stopperTir() {
     document.getElementById('chrono-lbl').textContent='TEMPS TOTAL';
     document.getElementById('btn-action').style.display='none';
     document.getElementById('btn-envoyer').style.display='block';
-    showToast('🎉 Les 3 séquences sont terminées !');
-    // Rafraîchir le détail s'il est ouvert
+    showToast('🎉 L\'épreuve est terminée !');
     if (_detailOpen) renderDetailView();
   }
 }
@@ -958,15 +1043,17 @@ function majOrdreAffichage() {
 ══════════════════════════════════════════════════════════════ */
 document.getElementById('btn-envoyer').addEventListener('click', function(){
   var s=S.sequences;
-  var tc=addTemps([s[0].course,s[1].course,s[2].course]);
-  var tt=addTemps([s[0].tir,s[1].tir,s[2].tir]);
-  var tth=s[0].cibles+s[1].cibles+s[2].cibles;
-  // Temps total = durée réelle depuis le départ (chrono global)
+  var n=s.length;
+  var courseTimes=[]; var tirTimes=[]; var tth=0;
+  for(var i=0;i<n;i++){ courseTimes.push(s[i].course); tirTimes.push(s[i].tir); tth+=s[i].cibles; }
+  var tc=addTemps(courseTimes);
+  var tt=addTemps(tirTimes);
   var totalMs = _now() - S.chronoGlobalStart;
   var totTemps = msToMmss(totalMs);
   var now=new Date();
   var rec={
     id:Date.now(), prenom:S.prenom, nom:S.nom, classe:S.classe,
+    mode: S.modeInverse ? '1ere' : 'term',
     date:now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}),
     heure:now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
     sequences:s, totCourse:tc, totTir:tt, totCibles:tth,
@@ -995,7 +1082,8 @@ function setPhaseBanner(type, text) {
 }
 function majDots() {
   var h='';
-  for (var i=0;i<NB_SEQ;i++) {
+  var nb = S.nbSeq || 3;
+  for (var i=0;i<nb;i++) {
     var c=i<S.seqIdx?'done':i===S.seqIdx?'cur':'';
     h+='<div class="sdot '+c+'"></div>';
   }
@@ -1003,7 +1091,8 @@ function majDots() {
 }
 function majRecap() {
   var h='';
-  for (var i=0;i<NB_SEQ;i++) {
+  var nb = S.nbSeq || 3;
+  for (var i=0;i<nb;i++) {
     var done=i<S.seqIdx, cur=i===S.seqIdx;
     var vals='<div class="recap-data">—</div>';
     if (done&&S.sequences[i]) {
@@ -1049,156 +1138,109 @@ function showDetailToggle() {
 }
 
 function renderDetailView() {
-  var seqs = S.sequences;  // séquences terminées
+  var seqs = S.sequences;
   var el = document.getElementById('detail-view');
+  var nbSeqTotal = S.nbSeq || 3;
+  var modeInv = S.modeInverse || false;
+
   if (!seqs || seqs.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.3);font-size:.9rem;">Aucune séquence terminée pour l\'instant.</div>';
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.3);font-size:.9rem;">Aucune séquence terminée.</div>';
     return;
   }
 
   var h = '';
+  var totCourseS = 0, totTirS = 0;
 
   // ── SECTION COURSES ──────────────────────────────────────────
   h += '<div class="detail-section">';
   h += '<div class="detail-section-head course">🏃 Temps de course</div>';
   h += '<div class="detail-rows">';
-  var totCourseS = 0;
-  for (var i = 0; i < seqs.length; i++) {
-    var s = mmss2s(seqs[i].course);
-    totCourseS += s;
-    h += '<div class="detail-row">'
-      + '<span class="detail-row-lbl">Course ' + (i+1) + '</span>'
-      + '<span class="detail-row-val ora">' + seqs[i].course + '</span>'
-      + '</div>';
+  for (var i = 0; i < seqs.length; i++) { totCourseS += mmss2s(seqs[i].course);
+    h += '<div class="detail-row"><span class="detail-row-lbl">Course '+(i+1)+'</span><span class="detail-row-val ora">'+seqs[i].course+'</span></div>';
   }
-  // Lignes vides pour les séquences pas encore faites
-  for (var i = seqs.length; i < NB_SEQ; i++) {
-    h += '<div class="detail-row">'
-      + '<span class="detail-row-lbl">Course ' + (i+1) + '</span>'
-      + '<span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span>'
-      + '</div>';
+  for (var i = seqs.length; i < nbSeqTotal; i++) {
+    h += '<div class="detail-row"><span class="detail-row-lbl">Course '+(i+1)+'</span><span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span></div>';
   }
-  h += '<div class="detail-row total-row">'
-    + '<span class="detail-row-lbl" style="font-weight:900;color:var(--ora)">Total course</span>'
-    + '<span class="detail-row-val ora">' + (seqs.length>0 ? s2mmss(totCourseS) : '—') + '</span>'
-    + '</div>';
-  h += '</div></div>'; // fin section courses
+  h += '<div class="detail-row total-row"><span class="detail-row-lbl" style="font-weight:900;color:var(--ora)">Total course</span><span class="detail-row-val ora">'+s2mmss(totCourseS)+'</span></div>';
+  h += '</div></div>';
 
-  // ── SECTION TIRS ─────────────────────────────────────────────
+  // ── SECTION TIRS + CIBLES ─────────────────────────────────────
   h += '<div class="detail-section">';
-  h += '<div class="detail-section-head tir">🔫 Temps de tir</div>';
+  h += '<div class="detail-section-head tir">🔫 Temps de tir &amp; cibles</div>';
   h += '<div class="detail-rows">';
-  var totTirS = 0;
-  for (var i = 0; i < seqs.length; i++) {
-    var s = mmss2s(seqs[i].tir);
-    totTirS += s;
-    h += '<div class="detail-row">'
-      + '<span class="detail-row-lbl">Tir ' + (i+1) + '</span>'
-      + '<span class="detail-row-val cyan">' + seqs[i].tir + '</span>'
-      + '</div>';
+  for (var i = 0; i < seqs.length; i++) { totTirS += mmss2s(seqs[i].tir);
+    h += '<div class="detail-row"><span class="detail-row-lbl">Tir '+(i+1)+'</span><span class="detail-row-val cyan">'+seqs[i].tir+'</span></div>';
   }
-  for (var i = seqs.length; i < NB_SEQ; i++) {
-    h += '<div class="detail-row">'
-      + '<span class="detail-row-lbl">Tir ' + (i+1) + '</span>'
-      + '<span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span>'
-      + '</div>';
+  for (var i = seqs.length; i < nbSeqTotal; i++) {
+    h += '<div class="detail-row"><span class="detail-row-lbl">Tir '+(i+1)+'</span><span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span></div>';
   }
-  h += '<div class="detail-row total-row">'
-    + '<span class="detail-row-lbl" style="font-weight:900;color:var(--cyan)">Total tir</span>'
-    + '<span class="detail-row-val cyan">' + (seqs.length>0 ? s2mmss(totTirS) : '—') + '</span>'
-    + '</div>';
+  h += '<div class="detail-row total-row"><span class="detail-row-lbl" style="font-weight:900;color:var(--cyan)">Total tir</span><span class="detail-row-val cyan">'+s2mmss(totTirS)+'</span></div>';
   h += '</div>';
 
-  // ── VISUALISATION CIBLES PAR TIR ─────────────────────────────
+  // Visualisation cibles par tir
   for (var i = 0; i < seqs.length; i++) {
     var sq = seqs[i];
-    h += '<div style="border-top:1px solid rgba(0,200,240,.15);">';
-    h += '<div class="detail-tir-bloc">';
-
-    // Déterminer la direction : première cible touchée (rang 0 dans sq.rang)
-    var direction = detecterDirection(sq.rang);
-    h += '<div class="detail-tir-dir">' + direction + '</div>';
-
-    // Construire l'affichage dans l'ordre de tir
+    h += '<div style="border-top:1px solid rgba(0,200,240,.15);"><div class="detail-tir-bloc">';
+    h += '<div class="detail-tir-dir">Tir '+(i+1)+' — '+detecterDirection(sq.rang)+'</div>';
     h += '<div class="detail-cibles-vis">';
-
     if (sq.rang && sq.rang.length > 0) {
-      // Afficher dans l'ordre de tir (sq.rang est déjà trié par ordre de tir)
       for (var k = 0; k < sq.rang.length; k++) {
         var r = sq.rang[k];
-        var cls = r.touche ? 'ok' : 'ko';
-        var ico = r.touche ? '✅' : '❌';
-        h += '<div class="detail-cible ' + cls + '">'
-          + ico
-          + '<div class="detail-cible-num">C' + (r.pos+1) + '</div>'
-          + '</div>';
-        if (k < sq.rang.length - 1) h += '<div class="detail-arrow">→</div>';
+        h += '<div class="detail-cible '+(r.touche?'ok':'ko')+'">'+(r.touche?'✅':'❌')+'<div class="detail-cible-num">C'+(r.pos+1)+'</div></div>';
+        if (k < sq.rang.length-1) h += '<div class="detail-arrow">→</div>';
       }
-      // Cibles non tirées
       var tiresPoses = sq.rang.map(function(x){ return x.pos; });
       var nonTires = [];
       for (var k = 0; k < NB_CIB; k++) if (tiresPoses.indexOf(k) < 0) nonTires.push(k);
       if (nonTires.length > 0) {
         h += '<div class="detail-arrow" style="opacity:.3">|</div>';
-        for (var k = 0; k < nonTires.length; k++) {
-          h += '<div class="detail-cible skip">—<div class="detail-cible-num">C' + (nonTires[k]+1) + '</div></div>';
-        }
+        for (var k = 0; k < nonTires.length; k++) h += '<div class="detail-cible skip">—<div class="detail-cible-num">C'+(nonTires[k]+1)+'</div></div>';
       }
     } else if (sq.detail) {
-      // Fallback : detail[] sans ordre
       for (var k = 0; k < NB_CIB; k++) {
-        var cls = sq.detail[k] ? 'ok' : 'ko';
-        var ico = sq.detail[k] ? '✅' : '❌';
-        h += '<div class="detail-cible ' + cls + '">' + ico
-          + '<div class="detail-cible-num">C' + (k+1) + '</div></div>';
-        if (k < NB_CIB - 1) h += '<div class="detail-arrow">→</div>';
+        h += '<div class="detail-cible '+(sq.detail[k]?'ok':'ko')+'">'+(sq.detail[k]?'✅':'❌')+'<div class="detail-cible-num">C'+(k+1)+'</div></div>';
+        if (k < NB_CIB-1) h += '<div class="detail-arrow">→</div>';
       }
     }
-    h += '</div>'; // detail-cibles-vis
-
-    // Score du tir
+    h += '</div>';
     var nb = sq.cibles;
-    h += '<div class="detail-score-line">Score tir '+(i+1)+' : <b>'+nb+'/5</b>'
-      + ' &nbsp;(' + (nb===5?'Parfait !':nb>=3?'Bien':'À améliorer') + ')'
-      + '</div>';
-    h += '</div></div>'; // detail-tir-bloc + border-top div
+    h += '<div class="detail-score-line">Score tir '+(i+1)+' : <b>'+nb+'/5</b> ('+(nb===5?'Parfait !':nb>=3?'Bien':'À améliorer')+')</div>';
+    h += '</div></div>';
   }
-
   h += '</div>'; // fin section tirs
 
+  // ── ORDRE D'ENCHAÎNEMENT ──────────────────────────────────────
+  h += '<div class="detail-section">';
+  h += '<div class="detail-section-head" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.08);">';
+  h += modeInv ? '🔄 Ordre : Tir → Course (1ères)' : '🔄 Ordre : Course → Tir (Terminales)';
+  h += '</div><div class="detail-rows">';
+  for (var i = 0; i < seqs.length; i++) {
+    if (modeInv) {
+      h += '<div class="detail-row"><span class="detail-row-lbl">Séq '+(i+1)+'</span><span class="detail-row-val" style="font-size:.8rem"><span style="color:var(--cyan)">🔫 '+seqs[i].tir+'</span> → <span style="color:var(--ora)">🏃 '+seqs[i].course+'</span></span></div>';
+    } else {
+      h += '<div class="detail-row"><span class="detail-row-lbl">Séq '+(i+1)+'</span><span class="detail-row-val" style="font-size:.8rem"><span style="color:var(--ora)">🏃 '+seqs[i].course+'</span> → <span style="color:var(--cyan)">🔫 '+seqs[i].tir+'</span></span></div>';
+    }
+  }
+  h += '</div></div>';
+
   // ── TEMPS GLOBAL ─────────────────────────────────────────────
+  var maxCib = nbSeqTotal * 5;
+  var totCib = 0; for (var i=0;i<seqs.length;i++) totCib += seqs[i].cibles;
+
   if (S.phase === 'fini') {
     var globalMs = _now() - S.chronoGlobalStart;
-    // S'il est figé, on utilise la somme calculée
     var globalStr = msToMmss(globalMs > 0 ? globalMs : (totCourseS + totTirS) * 1000);
-    h += '<div class="detail-section">';
-    h += '<div class="detail-section-head total">⏱ Temps global</div>';
-    h += '<div class="detail-rows">';
-    h += '<div class="detail-row"><span class="detail-row-lbl">Total course</span>'
-      + '<span class="detail-row-val ora">' + s2mmss(totCourseS) + '</span></div>';
-    h += '<div class="detail-row"><span class="detail-row-lbl">Total tir</span>'
-      + '<span class="detail-row-val cyan">' + s2mmss(totTirS) + '</span></div>';
-    h += '<div class="detail-row total-row">'
-      + '<span class="detail-row-lbl" style="font-weight:900;color:var(--grn);font-size:.9rem">⏱ TEMPS TOTAL</span>'
-      + '<span class="detail-row-val grn" style="font-size:1.2rem">' + globalStr + '</span>'
-      + '</div>';
-    // Score cibles total
-    var totCib = 0;
-    for (var i=0;i<seqs.length;i++) totCib += seqs[i].cibles;
-    h += '<div class="detail-row total-row">'
-      + '<span class="detail-row-lbl" style="font-weight:900;color:var(--grn)">🎯 Total cibles</span>'
-      + '<span class="detail-row-val grn">' + totCib + '/15</span>'
-      + '</div>';
+    h += '<div class="detail-section"><div class="detail-section-head total">⏱ Bilan final</div><div class="detail-rows">';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Total course</span><span class="detail-row-val ora">'+s2mmss(totCourseS)+'</span></div>';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Total tir</span><span class="detail-row-val cyan">'+s2mmss(totTirS)+'</span></div>';
+    h += '<div class="detail-row total-row"><span class="detail-row-lbl" style="font-weight:900;color:var(--grn);font-size:.9rem">⏱ TEMPS TOTAL</span><span class="detail-row-val grn" style="font-size:1.2rem">'+globalStr+'</span></div>';
+    h += '<div class="detail-row total-row"><span class="detail-row-lbl" style="font-weight:900;color:var(--grn)">🎯 Total cibles</span><span class="detail-row-val grn">'+totCib+'/'+maxCib+'</span></div>';
     h += '</div></div>';
   } else if (seqs.length > 0) {
-    // Course en cours : temps partiel
-    h += '<div class="detail-section">';
-    h += '<div class="detail-section-head total">⏱ Partiel</div>';
-    h += '<div class="detail-rows">';
-    h += '<div class="detail-row"><span class="detail-row-lbl">Course terminées</span>'
-      + '<span class="detail-row-val ora">' + s2mmss(totCourseS) + '</span></div>';
-    h += '<div class="detail-row"><span class="detail-row-lbl">Tirs terminés</span>'
-      + '<span class="detail-row-val cyan">' + s2mmss(totTirS) + '</span></div>';
+    h += '<div class="detail-section"><div class="detail-section-head total">⏱ Partiel</div><div class="detail-rows">';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Courses terminées</span><span class="detail-row-val ora">'+s2mmss(totCourseS)+'</span></div>';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Tirs terminés</span><span class="detail-row-val cyan">'+s2mmss(totTirS)+'</span></div>';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Cibles</span><span class="detail-row-val grn">'+totCib+'/'+maxCib+'</span></div>';
     h += '</div></div>';
   }
 
@@ -1307,12 +1349,15 @@ function syncEleveFilter() {
 
 function majCompteursTabs() {
   var allArr=[]; for(var k in allData) allArr.push(allData[k]);
-  var counts={'':allArr.length,'Term A':0,'Term B':0,'Term C':0};
+  var counts={'':allArr.length,'1ère A':0,'1ère B':0,'1ère C':0,'Term A':0,'Term B':0,'Term C':0};
   for(var i=0;i<allArr.length;i++){
     var cl=allArr[i].classe;
     if(counts[cl]!==undefined) counts[cl]++;
   }
   document.getElementById('ctab-count-all').textContent=counts[''];
+  document.getElementById('ctab-count-1a').textContent=counts['1ère A'];
+  document.getElementById('ctab-count-1b').textContent=counts['1ère B'];
+  document.getElementById('ctab-count-1c').textContent=counts['1ère C'];
   document.getElementById('ctab-count-a').textContent=counts['Term A'];
   document.getElementById('ctab-count-b').textContent=counts['Term B'];
   document.getElementById('ctab-count-c').textContent=counts['Term C'];
@@ -1337,46 +1382,85 @@ function renderProf() {
   var mH=n?(filt.reduce(function(a,r){return a+r.totCibles;},0)/n).toFixed(1):'--';
   var mC=n?s2mmss(Math.round(filt.reduce(function(a,r){return a+mmss2s(r.totCourse);},0)/n)):'--';
   var mT=n?s2mmss(Math.round(filt.reduce(function(a,r){return a+mmss2s(r.totTir);},0)/n)):'--';
+
+  // Détecter le mode dominant dans la sélection
+  var nbPrem=0, nbTerm=0;
+  for(var i=0;i<filt.length;i++){
+    if(estPremiere(filt[i].classe)) nbPrem++; else nbTerm++;
+  }
+  var modeAffiche = (nbPrem >= nbTerm) ? '1ere' : 'term';
+  var nbSeqAffiche = modeAffiche==='1ere' ? 4 : 3;
+  var maxCib = nbSeqAffiche * 5;
+  var pillSeuil = function(h){ return h>=maxCib*0.8?'good':h>=maxCib*0.5?'mid':'low'; };
+
+  // En-tête dynamique
+  var thead = document.getElementById('t-head');
+  var thH = '<tr><th>Élève</th><th>Classe</th><th class="c">Date/Heure</th>';
+  for(var j=0;j<nbSeqAffiche;j++){
+    if(modeAffiche==='1ere'){
+      thH += '<th class="c">Tir '+(j+1)+'</th><th class="c">Cib.'+(j+1)+'</th><th class="c">Course '+(j+1)+'</th>';
+    } else {
+      thH += '<th class="c">Course '+(j+1)+'</th><th class="c">Tir '+(j+1)+'</th><th class="c">Cib.'+(j+1)+'</th>';
+    }
+  }
+  thH += '<th class="c">Tot.Course</th><th class="c">Tot.Tir</th><th class="c">Tot.Cibles</th><th class="c">Tps Total</th></tr>';
+  thead.innerHTML = thH;
+
+  var nbCols = 3 + nbSeqAffiche*3 + 4;
   document.getElementById('t-stats').innerHTML=
     '<div class="stat-c"><div class="stat-n">'+n+'</div><div class="stat-l">Élèves</div></div>'+
-    '<div class="stat-c"><div class="stat-n">'+mH+'/15</div><div class="stat-l">Moy. cibles</div></div>'+
+    '<div class="stat-c"><div class="stat-n">'+mH+'/'+maxCib+'</div><div class="stat-l">Moy. cibles</div></div>'+
     '<div class="stat-c"><div class="stat-n">'+mC+'</div><div class="stat-l">Moy. course</div></div>'+
     '<div class="stat-c"><div class="stat-n">'+mT+'</div><div class="stat-l">Moy. tir</div></div>';
 
   var tb=document.getElementById('t-body');
   if (!filt.length){
-    tb.innerHTML='<tr><td colspan="16"><div class="empty-t">📭 Aucun résultat</div></td></tr>';
+    tb.innerHTML='<tr><td colspan="'+nbCols+'"><div class="empty-t">📭 Aucun résultat</div></td></tr>';
     return;
   }
-  var pc=function(h){return h>=4?'good':h>=2?'mid':'low';};
-  var pt=function(h){return h>=12?'good':h>=7?'mid':'low';};
+
+  function buildCibBloc(sq) {
+    var pts='<div class="cib-bloc"><div class="cib-rang">';
+    if (sq && sq.rang && sq.rang.length) {
+      for (var k=0;k<sq.rang.length;k++){
+        var rv=sq.rang[k];
+        pts+='<div class="cib-item"><div class="cib-pt '+(rv.touche?'ok':'ko')+'"></div><div class="cib-num">C'+(rv.pos+1)+'</div></div>';
+        if(k<sq.rang.length-1) pts+='<span class="cib-arrow">›</span>';
+      }
+      var tires=sq.rang.map(function(x){return x.pos;});
+      for (var k=0;k<5;k++) if(tires.indexOf(k)<0) pts+='<div class="cib-item"><div class="cib-pt ko"></div><div class="cib-num" style="color:#e63946">C'+(k+1)+'</div></div>';
+    } else if (sq) {
+      for (var k=0;k<5;k++) pts+='<div class="cib-pt '+(sq.detail&&sq.detail[k]?'ok':k<sq.cibles?'ok':'ko')+'"></div>';
+    }
+    pts+='</div><div style="font-size:.65rem;color:#888;font-weight:700">'+(sq?sq.cibles:0)+'/5</div></div>';
+    return pts;
+  }
+
   var h='';
   for (var i=0;i<filt.length;i++){
     var r=filt[i];
+    var rMode = r.mode || (estPremiere(r.classe)?'1ere':'term');
+    var rNbSeq = rMode==='1ere' ? 4 : 3;
+    var rMaxCib = rNbSeq*5;
     h+='<tr onclick="ouvrirModalEleve(\''+encodeURIComponent(r.prenom+' '+(r.nom||'').trim())+'\')" style="cursor:pointer">';
     h+='<td><span class="sn">'+r.prenom+' '+(r.nom||'')+'</span></td>';
     h+='<td><span class="ct">'+r.classe+'</span></td>';
     h+='<td class="c" style="color:#888;font-size:.72rem">'+(r.date||'--')+'<br>'+r.heure+'</td>';
-    for (var j=0;j<3;j++){
-      var sq=r.sequences[j];
-      var pts='<div class="cib-bloc"><div class="cib-rang">';
-      if (sq.rang&&sq.rang.length) {
-        for (var k=0;k<sq.rang.length;k++){
-          var rv=sq.rang[k];
-          pts+='<div class="cib-item"><div class="cib-pt '+(rv.touche?'ok':'ko')+'"></div><div class="cib-num">C'+(rv.pos+1)+'</div></div>';
-          if(k<sq.rang.length-1) pts+='<span class="cib-arrow">›</span>';
-        }
-        var tires=sq.rang.map(function(x){return x.pos;});
-        for (var k=0;k<5;k++) if(tires.indexOf(k)<0) pts+='<div class="cib-item"><div class="cib-pt ko"></div><div class="cib-num" style="color:#e63946">C'+(k+1)+'</div></div>';
+    // Séquences — afficher selon le mode de l'élève
+    for (var j=0;j<nbSeqAffiche;j++){
+      var sq = r.sequences ? r.sequences[j] : null;
+      if (!sq) {
+        h+='<td class="c">—</td><td class="c">—</td><td class="c">—</td>';
+      } else if (rMode==='1ere') {
+        h+='<td class="c">'+sq.tir+'</td><td class="c">'+buildCibBloc(sq)+'</td><td class="c">'+sq.course+'</td>';
       } else {
-        for (var k=0;k<5;k++) pts+='<div class="cib-pt '+(sq.detail&&sq.detail[k]?'ok':k<sq.cibles?'ok':'ko')+'"></div>';
+        h+='<td class="c">'+sq.course+'</td><td class="c">'+sq.tir+'</td><td class="c">'+buildCibBloc(sq)+'</td>';
       }
-      pts+='</div><div style="font-size:.65rem;color:#888;font-weight:700">'+sq.cibles+'/5</div></div>';
-      h+='<td class="c">'+sq.course+'</td><td class="c">'+sq.tir+'</td><td class="c">'+pts+'</td>';
     }
+    var ptSeuil = r.totCibles>=(rMaxCib*0.8)?'good':r.totCibles>=(rMaxCib*0.5)?'mid':'low';
     h+='<td class="c"><span class="tps">'+r.totCourse+'</span></td>';
     h+='<td class="c"><span class="tps">'+r.totTir+'</span></td>';
-    h+='<td class="c"><span class="pill '+pt(r.totCibles)+'">'+r.totCibles+'/15</span></td>';
+    h+='<td class="c"><span class="pill '+ptSeuil+'">'+r.totCibles+'/'+rMaxCib+'</span></td>';
     h+='<td class="c"><span class="tps">'+r.totTemps+'</span></td></tr>';
   }
   tb.innerHTML=h;
@@ -1388,12 +1472,28 @@ function exportCSV() {
   var eleveSel=document.getElementById('t-filter-eleve').value;
   var filt=getArr(_classeActive,dateSel,eleveSel);
   if (!filt.length){ showToast('Aucun résultat','org'); return; }
-  var csv='"Prénom";"Nom";"Classe";"Date";"Heure";"Course 1";"Tir 1";"Cibles 1";"Course 2";"Tir 2";"Cibles 2";"Course 3";"Tir 3";"Cibles 3";"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
+
+  // En-tête dynamique selon le max de séquences dans la sélection
+  var maxSeq=3;
+  for(var i=0;i<filt.length;i++){
+    var m = filt[i].mode || (estPremiere(filt[i].classe)?'1ere':'term');
+    if(m==='1ere' && maxSeq<4) maxSeq=4;
+  }
+  var csvHead='"Prénom";"Nom";"Classe";"Mode";"Date";"Heure"';
+  for(var j=0;j<maxSeq;j++) csvHead+=';\"Course '+(j+1)+'\";"Tir '+(j+1)+'\";"Cibles '+(j+1)+'"';
+  csvHead+=';"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
+
+  var csv=csvHead;
   for (var i=0;i<filt.length;i++){
     var r=filt[i];
-    csv+='"'+r.prenom+'";"'+(r.nom||'')+'\";"'+r.classe+'";"'+(r.date||'')+'\";"'+r.heure+'"';
-    for (var j=0;j<3;j++) csv+=';"'+r.sequences[j].course+'";"'+r.sequences[j].tir+'";"'+r.sequences[j].cibles+'/5"';
-    csv+=';"'+r.totCourse+'";"'+r.totTir+'";"'+r.totCibles+'/15";"'+r.totTemps+'"\r\n';
+    var rMode=r.mode||(estPremiere(r.classe)?'1ere':'term');
+    var rNbSeq=rMode==='1ere'?4:3;
+    csv+='"'+r.prenom+'";"'+(r.nom||'')+'\";"'+r.classe+'";"'+rMode+'";"'+(r.date||'')+'\";"'+r.heure+'"';
+    for(var j=0;j<maxSeq;j++){
+      var sq=r.sequences&&r.sequences[j]?r.sequences[j]:null;
+      csv+=sq?';"'+(sq.course||'')+'\";"'+(sq.tir||'')+'\";"'+(sq.cibles||0)+'/5"':';"-";"-";"-"';
+    }
+    csv+=';"'+r.totCourse+'";"'+r.totTir+'";"'+r.totCibles+'/'+(rNbSeq*5)+'";"'+r.totTemps+'"\r\n';
   }
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
