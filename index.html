@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1b2a">
+<title>Biathlon EPS</title>
+<style>
+:root{
+  --bg:#0d1b2a;--bg2:#1a3a5c;--bg3:#0a4a6e;
+  --ora:#f77f00;--cyan:#00c8f0;--grn:#2dc653;--red:#e63946;
+  --white:rgba(255,255,255,.9);--dim:rgba(255,255,255,.25);
+  --card:rgba(255,255,255,.06);--border:rgba(255,255,255,.12);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+html,body{height:100%;overscroll-behavior:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Arial,sans-serif;
+  background:var(--bg);color:#fff;font-size:16px;
+  padding-top:var(--safe-top);padding-bottom:var(--safe-bot);}
+
+/* ── PAGES ─────────────────────────────────────────────────── */
+.page{display:none;min-height:100vh;min-height:-webkit-fill-available;}
+.page.on{display:block;}
+#p-home.on{display:flex;}
+#p-pwd.on{display:flex;}
+
+/* ── ACCUEIL ────────────────────────────────────────────────── */
+#p-home{flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem;text-align:center;
+  background:linear-gradient(160deg,#0d1b2a 0%,#1a3a5c 55%,#0a4a6e 100%);}
+.home-icon{font-size:4.5rem;margin-bottom:.3rem;animation:pulse 3s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.home-title{font-size:3rem;font-weight:900;letter-spacing:10px;color:#fff;line-height:1;}
+.home-sub{color:var(--cyan);font-size:.8rem;letter-spacing:4px;text-transform:uppercase;margin:.5rem 0 2.5rem;}
+.home-btns{display:flex;flex-direction:column;gap:1rem;width:100%;max-width:300px;}
+.btn-home{padding:1.2rem;border-radius:18px;border:none;cursor:pointer;font-size:1.05rem;
+  font-weight:800;letter-spacing:1px;font-family:inherit;transition:transform .1s,box-shadow .1s;}
+.btn-home:active{transform:scale(.96);}
+.btn-orange{background:var(--ora);color:#fff;box-shadow:0 8px 24px rgba(247,127,0,.4);}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border:2px solid rgba(255,255,255,.25);font-weight:700;}
+
+/* ── MOT DE PASSE ───────────────────────────────────────────── */
+#p-pwd{background:#f0f4f8;align-items:center;justify-content:center;padding:2rem;}
+.pwd-card{background:#fff;border-radius:24px;padding:2.2rem;width:100%;max-width:340px;
+  text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.12);}
+.pwd-card h2{font-size:1.6rem;font-weight:900;color:#1a3a5c;margin:.5rem 0;}
+.pwd-card p{color:#888;font-size:.88rem;margin-bottom:1.2rem;}
+.pwd-input{width:100%;border:2px solid #e0e8f0;padding:.9rem;border-radius:14px;
+  font-size:1.4rem;text-align:center;letter-spacing:8px;outline:none;font-family:inherit;
+  margin-bottom:.5rem;transition:border-color .2s;}
+.pwd-input:focus{border-color:#1a3a5c;}
+.pwd-err{color:var(--red);font-size:.85rem;margin-bottom:.5rem;display:none;}
+.btn-blue{width:100%;background:#1a3a5c;color:#fff;border:none;padding:.95rem;
+  border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;
+  margin-bottom:.5rem;transition:background .2s;}
+.btn-blue:active{background:#0d1b2a;}
+.btn-lien{background:none;border:none;color:#888;cursor:pointer;font-size:.85rem;font-family:inherit;}
+
+/* ── IDENTIFICATION ─────────────────────────────────────────── */
+#p-ident{background:linear-gradient(160deg,#0d1b2a,#1a3a5c);}
+.topbar{display:flex;align-items:center;gap:.8rem;padding:.9rem 1.2rem;
+  background:rgba(13,27,42,.95);position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.topbar-title{font-weight:800;font-size:1rem;color:#fff;}
+.back-btn{width:38px;height:38px;border-radius:10px;border:none;cursor:pointer;
+  background:rgba(255,255,255,.12);color:#fff;font-size:1.1rem;flex-shrink:0;font-family:inherit;}
+.ident-body{padding:1.5rem;display:flex;flex-direction:column;gap:1rem;max-width:480px;margin:0 auto;}
+.ident-titre{font-size:1.4rem;font-weight:900;text-align:center;margin-bottom:.3rem;}
+.inp-grp{display:flex;flex-direction:column;gap:.35rem;}
+.inp-grp label{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);font-weight:700;}
+.inp-grp input,.inp-grp select{
+  padding:.88rem 1rem;border-radius:14px;border:2px solid var(--border);
+  background:rgba(255,255,255,.08);color:#fff;font-size:1rem;font-family:inherit;
+  outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s;}
+.inp-grp input::placeholder{color:rgba(255,255,255,.3);}
+.inp-grp input:focus,.inp-grp select:focus{border-color:var(--cyan);}
+.inp-grp select option{background:#1a3a5c;color:#fff;}
+.btn-commencer{width:100%;padding:1.15rem;border-radius:18px;border:none;
+  background:var(--ora);color:#fff;font-size:1.15rem;font-weight:900;letter-spacing:2px;
+  cursor:pointer;margin-top:.5rem;box-shadow:0 8px 24px rgba(247,127,0,.4);font-family:inherit;
+  transition:transform .1s;}
+.btn-commencer:active{transform:scale(.97);}
+
+/* ── SÉQUENCE ───────────────────────────────────────────────── */
+#p-seq{background:var(--bg);}
+.seq-topbar{display:flex;align-items:center;justify-content:space-between;
+  padding:.8rem 1.2rem;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.seq-eleve-lbl{font-size:.82rem;color:rgba(255,255,255,.5);font-weight:600;}
+.seq-dots{display:flex;gap:.45rem;align-items:center;}
+.sdot{width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.12);transition:.3s;}
+.sdot.done{background:var(--grn);}
+.sdot.cur{background:var(--ora);box-shadow:0 0 8px rgba(247,127,0,.6);}
+.seq-content{padding:1.2rem;display:flex;flex-direction:column;gap:1rem;
+  max-width:480px;margin:0 auto;padding-bottom:2rem;}
+
+/* ── PHASE BANNER ───────────────────────────────────────────── */
+.phase-banner{border-radius:16px;padding:.8rem 1.2rem;text-align:center;
+  font-weight:900;font-size:1rem;letter-spacing:2px;transition:all .25s;}
+.phase-banner.idle  {background:rgba(255,255,255,.04);color:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.08);}
+.phase-banner.course{background:rgba(247,127,0,.15);color:var(--ora);border:2px solid rgba(247,127,0,.35);}
+.phase-banner.tir   {background:rgba(0,200,240,.12);color:var(--cyan);border:2px solid rgba(0,200,240,.3);}
+.phase-banner.fini  {background:rgba(45,198,83,.13);color:var(--grn);border:2px solid rgba(45,198,83,.35);}
+.phase-banner.go    {background:rgba(45,198,83,.2);color:var(--grn);border:2px solid var(--grn);
+  animation:pulseBanner .6s ease-in-out 3;}
+@keyframes pulseBanner{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+
+/* ── CHRONO ─────────────────────────────────────────────────── */
+.chrono-bloc{text-align:center;padding:.6rem 0 .3rem;position:relative;}
+.chrono-lbl{font-size:.7rem;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:.2rem;transition:color .2s;}
+.chrono-lbl.idle{color:rgba(255,255,255,.2);}
+.chrono-lbl.course{color:var(--ora);}
+.chrono-lbl.tir{color:var(--cyan);}
+.chrono-val{font-size:5.5rem;font-weight:900;line-height:1;letter-spacing:4px;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum";transition:color .15s;}
+.chrono-val.idle{color:rgba(255,255,255,.12);}
+.chrono-val.course{color:var(--ora);}
+.chrono-val.tir{color:var(--cyan);}
+/* Milliseconds display */
+.chrono-ms{font-size:1.6rem;font-weight:700;color:inherit;opacity:.5;font-variant-numeric:tabular-nums;}
+
+/* ── CIBLES ─────────────────────────────────────────────────── */
+.cibles-bloc{background:rgba(0,200,240,.07);border:2px solid rgba(0,200,240,.2);
+  border-radius:20px;padding:1.1rem;display:none;}
+.cibles-bloc.show{display:block;}
+.cibles-titre{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;
+  color:var(--cyan);font-weight:700;text-align:center;margin-bottom:.9rem;}
+.cibles-grille-wrap{display:flex;flex-direction:column;align-items:center;gap:.6rem;}
+.cibles-pos-labels{display:flex;gap:.6rem;justify-content:center;}
+.pos-lbl{width:60px;text-align:center;font-size:.62rem;color:rgba(255,255,255,.3);
+  letter-spacing:1px;text-transform:uppercase;}
+.cibles-grille{display:flex;justify-content:center;gap:.6rem;}
+.cible{width:60px;height:60px;border-radius:50%;border:3px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);cursor:pointer;font-size:.9rem;font-weight:900;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:transform .1s,background .15s,border-color .15s;
+  -webkit-user-select:none;user-select:none;line-height:1.1;
+  touch-action:manipulation;}
+.cible:active{transform:scale(.84);}
+.cible.touche{background:var(--grn);border-color:var(--grn);
+  box-shadow:0 0 18px rgba(45,198,83,.55);}
+.cible.rate{background:rgba(230,57,70,.3);border-color:var(--red);}
+.cible .rang{font-size:.6rem;opacity:.8;margin-top:1px;}
+.cibles-score{text-align:center;margin-top:.5rem;font-size:1.05rem;font-weight:900;color:#fff;}
+.cibles-score span{color:var(--grn);}
+.cibles-ordre{margin-top:.5rem;display:flex;gap:.35rem;justify-content:center;
+  align-items:center;flex-wrap:wrap;}
+
+/* ── BOUTONS ACTION ─────────────────────────────────────────── */
+.btn-action{width:100%;padding:1.4rem;border-radius:20px;border:none;cursor:pointer;
+  font-size:1.1rem;font-weight:900;letter-spacing:2px;font-family:inherit;
+  transition:transform .1s,box-shadow .1s;touch-action:manipulation;}
+.btn-action:active{transform:scale(.96);}
+.btn-action:disabled{opacity:.3;cursor:default;transform:none !important;}
+.btn-green{background:var(--grn);color:#fff;box-shadow:0 8px 28px rgba(45,198,83,.4);}
+.btn-red  {background:var(--red);color:#fff;box-shadow:0 8px 28px rgba(230,57,70,.4);}
+.btn-cyan {background:var(--cyan);color:#0d1b2a;box-shadow:0 8px 28px rgba(0,200,240,.4);}
+.btn-ora  {background:var(--ora);color:#fff;box-shadow:0 8px 28px rgba(247,127,0,.4);}
+
+/* ── RÉCAP ──────────────────────────────────────────────────── */
+.recap-bloc{display:flex;flex-direction:column;gap:.4rem;}
+.recap-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.65rem .95rem;border-radius:12px;background:var(--card);border:1px solid var(--border);}
+.recap-row.done{border-color:rgba(45,198,83,.4);background:rgba(45,198,83,.06);}
+.recap-row.cur {border-color:rgba(247,127,0,.35);background:rgba(247,127,0,.06);}
+.recap-seq-name{font-size:.83rem;font-weight:700;color:rgba(255,255,255,.38);}
+.recap-seq-name.done{color:var(--grn);}
+.recap-seq-name.cur {color:var(--ora);}
+.recap-data{font-size:.78rem;color:rgba(255,255,255,.32);display:flex;gap:.6rem;}
+.recap-data b{color:#fff;}
+
+/* ── VUE DÉTAIL PRESTATION ───────────────────────────────────── */
+.detail-view{display:none;flex-direction:column;gap:.9rem;padding:1.2rem;
+  max-width:480px;margin:0 auto;padding-bottom:2rem;}
+.detail-view.show{display:flex;}
+.detail-section{background:var(--card);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;}
+.detail-section-head{padding:.65rem 1rem;font-size:.7rem;letter-spacing:2px;
+  text-transform:uppercase;font-weight:900;display:flex;align-items:center;gap:.5rem;}
+.detail-section-head.course{background:rgba(247,127,0,.18);color:var(--ora);border-bottom:1px solid rgba(247,127,0,.2);}
+.detail-section-head.tir   {background:rgba(0,200,240,.14);color:var(--cyan);border-bottom:1px solid rgba(0,200,240,.2);}
+.detail-section-head.total {background:rgba(45,198,83,.14);color:var(--grn);border-bottom:1px solid rgba(45,198,83,.2);}
+.detail-rows{display:flex;flex-direction:column;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.05);}
+.detail-row:last-child{border-bottom:none;}
+.detail-row.total-row{background:rgba(255,255,255,.04);}
+.detail-row-lbl{font-size:.82rem;color:rgba(255,255,255,.55);font-weight:600;}
+.detail-row-val{font-size:.95rem;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;}
+.detail-row-val.ora{color:var(--ora);}
+.detail-row-val.cyan{color:var(--cyan);}
+.detail-row-val.grn{color:var(--grn);}
+
+/* Visualisation cibles dans le détail */
+.detail-tir-bloc{padding:.75rem 1rem;}
+.detail-tir-dir{font-size:.68rem;color:rgba(255,255,255,.4);margin-bottom:.55rem;
+  letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.detail-cibles-vis{display:flex;align-items:center;gap:.3rem;flex-wrap:nowrap;}
+.detail-cible{width:44px;height:44px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.12);font-size:.7rem;font-weight:900;line-height:1.1;}
+.detail-cible.ok  {background:var(--grn);border-color:var(--grn);color:#fff;
+  box-shadow:0 0 12px rgba(45,198,83,.5);}
+.detail-cible.ko  {background:rgba(230,57,70,.25);border-color:var(--red);color:var(--red);}
+.detail-cible.skip{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.2);}
+.detail-cible-num{font-size:.55rem;opacity:.7;margin-top:1px;}
+.detail-arrow{color:rgba(255,255,255,.2);font-size:.9rem;flex-shrink:0;}
+.detail-score-line{display:flex;align-items:center;gap:.5rem;
+  padding:.5rem 1rem .75rem;font-size:.82rem;font-weight:700;color:rgba(255,255,255,.5);}
+.detail-score-line b{color:var(--grn);}
+
+/* Bouton bascule */
+.btn-detail-toggle{
+  background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);
+  color:#fff;border-radius:10px;padding:.4rem .85rem;
+  font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;
+  margin-left:auto;flex-shrink:0;touch-action:manipulation;
+  transition:background .15s;}
+.btn-detail-toggle:active{background:rgba(255,255,255,.2);}
+.btn-detail-toggle.active{background:rgba(0,200,240,.2);border-color:var(--cyan);color:var(--cyan);}
+
+/* ══════════════════════════════════════════════════════════════
+   PROF
+══════════════════════════════════════════════════════════════ */
+#p-teacher{background:#eef2f7;min-height:100vh;}
+.tea-top{display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;
+  background:#fff;border-bottom:2px solid #dde6f0;
+  position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.tea-top h2{font-size:1rem;font-weight:900;color:#1a3a5c;flex:1;}
+.live-b{display:flex;align-items:center;gap:.3rem;font-size:.75rem;color:#666;}
+.ldot{width:8px;height:8px;background:var(--grn);border-radius:50%;animation:bl 1.4s infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.15}}
+.back-dark{width:38px;height:38px;border-radius:10px;border:none;cursor:pointer;
+  background:#e8f0fb;color:#1a3a5c;font-size:1.1rem;flex-shrink:0;font-family:inherit;}
+.cnx-status{font-size:.75rem;padding:.3rem .7rem;border-radius:8px;font-weight:700;}
+.cnx-status.ok  {background:#d4f5df;color:#1a7a35;}
+.cnx-status.err {background:#fde8e8;color:#a01c28;}
+.cnx-status.load{background:#fff3cd;color:#856404;}
+
+/* Tabs prof */
+.tea-tabs{display:flex;background:#fff;border-bottom:2px solid #dde6f0;}
+.ttab{flex:1;padding:.75rem;text-align:center;font-size:.8rem;font-weight:700;
+  color:#888;cursor:pointer;border:none;background:none;font-family:inherit;
+  border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;}
+.ttab.active{color:#1a3a5c;border-bottom-color:#1a3a5c;}
+
+.tea-body{padding:1rem;}
+
+/* Stats */
+.stats-g{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1.2rem;}
+.stat-c{background:#fff;border:2px solid #dde6f0;border-radius:16px;padding:.95rem;text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.stat-n{font-size:1.9rem;font-weight:900;color:#1a3a5c;line-height:1;}
+.stat-l{font-size:.68rem;letter-spacing:1px;text-transform:uppercase;color:#888;margin-top:.2rem;}
+
+/* Filtres */
+.ctrl-r{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+.sel{background:#fff;border:2px solid #dde6f0;color:#111;padding:.5rem .8rem;
+  border-radius:10px;font-family:inherit;font-size:.82rem;outline:none;
+  -webkit-appearance:none;appearance:none;}
+.bsm{padding:.52rem .9rem;border-radius:10px;border:none;cursor:pointer;
+  font-family:inherit;font-size:.8rem;font-weight:700;}
+.bsm.org{background:var(--ora);color:#fff;}
+.bsm.red{background:var(--red);color:#fff;}
+.bsm.blue{background:#1a3a5c;color:#fff;}
+
+/* Tableau */
+.tbl-w{overflow-x:auto;background:#fff;border-radius:16px;border:2px solid #dde6f0;
+  box-shadow:0 2px 12px rgba(0,0,0,.04);}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+thead{background:#1a3a5c;color:#fff;}
+thead th{padding:.65rem .7rem;font-weight:700;font-size:.73rem;text-align:left;white-space:nowrap;}
+thead th.c{text-align:center;}
+tbody tr{border-bottom:1px solid #e8f0f8;transition:background .15s;}
+tbody tr:hover{background:#f5f9ff;}
+tbody tr.highlight{background:#fffbe6;}
+td{padding:.58rem .7rem;white-space:nowrap;color:#1a3a5c;}
+td.c{text-align:center;}
+.sn{font-weight:700;color:#1a3a5c;}
+.ct{font-size:.68rem;background:#e8f0fb;padding:.12rem .45rem;border-radius:6px;
+  color:#1a3a5c;font-weight:700;}
+.tps{font-weight:700;color:#1a3a5c;}
+.pill{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-weight:700;font-size:.74rem;}
+.pill.good{background:#d4f5df;color:#1a7a35;}
+.pill.mid {background:#fff3cd;color:#856404;}
+.pill.low {background:#fde8e8;color:#a01c28;}
+.empty-t{text-align:center;padding:2.5rem;color:#aaa;font-size:.9rem;}
+.cib-bloc{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.cib-rang{display:flex;gap:4px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.cib-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.cib-pt{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+.cib-pt.ok{background:var(--grn);box-shadow:0 0 4px rgba(45,198,83,.5);}
+.cib-pt.ko{background:var(--red);}
+.cib-num{font-size:.58rem;color:#aaa;font-weight:700;line-height:1;}
+.cib-arrow{font-size:.6rem;color:#ccc;margin:0 1px;}
+
+/* ── ÉVOLUTION (graphiques) ────────────────────────────────── */
+#p-evolution{background:#eef2f7;}
+.evo-body{padding:1rem;display:flex;flex-direction:column;gap:1.2rem;}
+.evo-filters{display:flex;gap:.5rem;flex-wrap:wrap;background:#fff;
+  border-radius:14px;padding:.9rem;border:2px solid #dde6f0;}
+.evo-card{background:#fff;border-radius:16px;padding:1.1rem;border:2px solid #dde6f0;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.evo-card-title{font-size:.78rem;font-weight:900;letter-spacing:2px;
+  text-transform:uppercase;color:#1a3a5c;margin-bottom:1rem;}
+.chart-wrap{width:100%;overflow-x:auto;}
+canvas.evo-chart{max-width:100%;display:block;}
+
+/* ── TOAST ──────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:calc(1.5rem + var(--safe-bot));left:50%;
+  transform:translateX(-50%) translateY(100px);padding:.9rem 1.6rem;border-radius:14px;
+  font-weight:700;font-size:.88rem;z-index:999;transition:.3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;color:#fff;
+  box-shadow:0 8px 32px rgba(0,0,0,.3);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── MODAL ÉLÈVE ───────────────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;
+  display:none;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+.modal-bg.open{display:flex;}
+.modal-sheet{background:#fff;border-radius:24px 24px 0 0;padding:1.5rem;
+  width:100%;max-width:600px;max-height:80vh;overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:1.1rem;font-weight:900;color:#1a3a5c;margin-bottom:1rem;}
+.modal-close{float:right;background:#eee;border:none;border-radius:8px;
+  padding:.3rem .7rem;cursor:pointer;font-size:.9rem;color:#666;}
+.session-list{display:flex;flex-direction:column;gap:.6rem;}
+.session-card{border:2px solid #dde6f0;border-radius:12px;padding:.9rem;cursor:pointer;
+  transition:border-color .2s,background .2s;}
+.session-card:hover,.session-card.sel{border-color:#1a3a5c;background:#f5f9ff;}
+.session-card-date{font-size:.8rem;font-weight:900;color:#1a3a5c;}
+.session-card-data{font-size:.75rem;color:#666;margin-top:.25rem;display:flex;gap:.8rem;flex-wrap:wrap;}
+
+/* ── TABLEAU COMPARATIF ─────────────────────────────────────── */
+.comp-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.comp-table th{background:#1a3a5c;color:#fff;padding:.6rem .8rem;text-align:left;}
+.comp-table th.c{text-align:center;}
+.comp-table td{padding:.55rem .8rem;border-bottom:1px solid #e8f0f8;color:#1a3a5c;}
+.comp-table td.c{text-align:center;}
+.comp-table tr:last-child td{border-bottom:none;}
+.delta{font-size:.7rem;font-weight:700;padding:.1rem .35rem;border-radius:4px;}
+.delta.better{color:#1a7a35;background:#d4f5df;}
+.delta.worse{color:#a01c28;background:#fde8e8;}
+.delta.same{color:#666;background:#f0f0f0;}
+</style>
+</head>
+<body>
+
+<!-- ACCUEIL -->
+<div id="p-home" class="page on">
+  <div class="home-icon">🎿</div>
+  <div class="home-title">BIATHLON</div>
+  <div class="home-sub">EPS — Laser &amp; Course</div>
+  <div class="home-btns">
+    <button class="btn-home btn-orange" id="btn-eleve">🏃 Mode Élève</button>
+    <button class="btn-home btn-ghost"  id="btn-prof">🎓 Mode Professeur</button>
+  </div>
+</div>
+
+<!-- MOT DE PASSE -->
+<div id="p-pwd" class="page">
+  <div class="pwd-card">
+    <div style="font-size:2.2rem">🔒</div>
+    <h2>MODE PROF</h2>
+    <p>Code d'accès enseignant</p>
+    <input class="pwd-input" type="password" id="pwd-in" placeholder="••••" maxlength="6" inputmode="numeric">
+    <div class="pwd-err" id="pwd-err">❌ Code incorrect</div>
+    <button class="btn-blue" id="btn-pwd-ok">ACCÉDER</button>
+    <button class="btn-lien" id="btn-pwd-back">← Retour</button>
+  </div>
+</div>
+
+<!-- IDENTIFICATION -->
+<div id="p-ident" class="page">
+  <div class="topbar">
+    <button class="back-btn" id="btn-ident-back">←</button>
+    <span class="topbar-title">🎿 Biathlon EPS</span>
+  </div>
+  <div class="ident-body">
+    <div class="ident-titre">Qui es-tu ?</div>
+    <div class="inp-grp">
+      <label>Prénom *</label>
+      <input type="text" id="s-prenom" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words">
+    </div>
+    <div class="inp-grp">
+      <label>Nom</label>
+      <input type="text" id="s-nom" placeholder="Ton nom" autocomplete="family-name" autocapitalize="words">
+    </div>
+    <div class="inp-grp">
+      <label>Classe *</label>
+      <select id="s-classe">
+        <option value="">-- Ta classe --</option>
+        <option>6ème A</option><option>6ème B</option>
+        <option>5ème A</option><option>5ème B</option>
+        <option>4ème A</option><option>4ème B</option>
+        <option>3ème A</option><option>3ème B</option>
+        <option>Term A</option><option>Term B</option><option>Term C</option>
+      </select>
+    </div>
+    <button class="btn-commencer" id="btn-commencer">▶ COMMENCER</button>
+  </div>
+</div>
+
+<!-- SÉQUENCE -->
+<div id="p-seq" class="page">
+  <div class="seq-topbar">
+    <span class="seq-eleve-lbl" id="seq-eleve-lbl"></span>
+    <div class="seq-dots" id="seq-dots"></div>
+    <button class="btn-detail-toggle" id="btn-detail-toggle" style="display:none;">📋 Détail</button>
+  </div>
+  <div class="seq-content" id="seq-main-view">
+    <div class="phase-banner idle" id="phase-banner">EN ATTENTE</div>
+    <div class="chrono-bloc">
+      <div class="chrono-lbl idle" id="chrono-lbl">—</div>
+      <div class="chrono-val idle" id="chrono-val">00:00<span class="chrono-ms" id="chrono-ms">.0</span></div>
+    </div>
+    <div class="cibles-bloc" id="cibles-bloc">
+      <div class="cibles-titre">🎯 Appuie sur chaque cible dans l'ordre où tu tires</div>
+      <div class="cibles-grille-wrap">
+        <div class="cibles-pos-labels" id="cibles-pos-labels"></div>
+        <div class="cibles-grille" id="cibles-grille"></div>
+      </div>
+      <div class="cibles-score">Touchées : <span id="cibles-score-val">0</span> / 5</div>
+      <div class="cibles-ordre" id="cibles-ordre"></div>
+    </div>
+    <button class="btn-action btn-green" id="btn-action">▶ DÉMARRER LA COURSE</button>
+    <div class="recap-bloc" id="recap-bloc"></div>
+    <button class="btn-action btn-ora" id="btn-envoyer" style="display:none;">✅ ENVOYER MES RÉSULTATS</button>
+    <div style="height:2rem;"></div>
+  </div>
+  <!-- VUE DÉTAIL -->
+  <div class="detail-view" id="detail-view"></div>
+</div>
+
+<!-- PROF - TABLEAU -->
+<div id="p-teacher" class="page">
+  <div class="tea-top">
+    <button class="back-dark" id="btn-tea-back">←</button>
+    <h2>📊 Tableau de bord</h2>
+    <span class="cnx-status load" id="cnx-status">⏳ Connexion...</span>
+    <div class="live-b" style="margin-left:.4rem;"><span class="ldot"></span> Live</div>
+  </div>
+  <div class="tea-tabs">
+    <button class="ttab active" id="tab-liste" onclick="showTab('liste')">📋 Résultats</button>
+    <button class="ttab" id="tab-evo" onclick="showTab('evo')">📈 Évolution</button>
+  </div>
+
+  <!-- TAB LISTE -->
+  <div id="tab-content-liste">
+    <div class="tea-body">
+      <div class="stats-g" id="t-stats"></div>
+      <div class="ctrl-r">
+        <select class="sel" id="t-filter-classe"><option value="">Toutes les classes</option></select>
+        <select class="sel" id="t-filter-date"><option value="">Toutes les dates</option></select>
+        <select class="sel" id="t-filter-eleve"><option value="">Tous les élèves</option></select>
+        <button class="bsm org" id="btn-export">⬇️ CSV</button>
+        <button class="bsm red" id="btn-vider">🗑️ Vider</button>
+      </div>
+      <div class="tbl-w">
+        <table>
+          <thead><tr>
+            <th>Élève</th><th>Classe</th><th class="c">Date/Heure</th>
+            <th class="c">Course 1</th><th class="c">Tir 1</th><th class="c">Cibles 1</th>
+            <th class="c">Course 2</th><th class="c">Tir 2</th><th class="c">Cibles 2</th>
+            <th class="c">Course 3</th><th class="c">Tir 3</th><th class="c">Cibles 3</th>
+            <th class="c">Tot.Course</th><th class="c">Tot.Tir</th>
+            <th class="c">Tot.Cibles</th><th class="c">Tps Total</th>
+          </tr></thead>
+          <tbody id="t-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB ÉVOLUTION -->
+  <div id="tab-content-evo" style="display:none;">
+    <div class="evo-body">
+      <div class="evo-filters">
+        <select class="sel" id="evo-filter-classe" style="flex:1">
+          <option value="">Toutes les classes</option>
+        </select>
+        <select class="sel" id="evo-filter-eleve" style="flex:2">
+          <option value="">-- Sélectionner un élève --</option>
+        </select>
+      </div>
+      <div id="evo-content">
+        <div class="evo-card">
+          <div style="text-align:center;padding:2rem;color:#aaa;font-size:.9rem;">
+            📊 Sélectionnez un élève pour voir son évolution
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ÉLÈVE (historique séances) -->
+<div class="modal-bg" id="modal-eleve">
+  <div class="modal-sheet">
+    <button class="modal-close" id="modal-close">✕ Fermer</button>
+    <div class="modal-title" id="modal-eleve-title">Historique</div>
+    <div class="session-list" id="modal-session-list"></div>
+    <div id="modal-comp-table" style="margin-top:1.2rem;overflow-x:auto;"></div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════════════ */
+var firebaseConfig = {
+  apiKey: "AIzaSyBTNJWUITy6kEePTUYPnkjggkULuiK98rA",
+  authDomain: "biathlon-eps.firebaseapp.com",
+  databaseURL: "https://biathlon-eps-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "biathlon-eps",
+  storageBucket: "biathlon-eps.firebasestorage.app",
+  messagingSenderId: "591938201355",
+  appId: "1:591938201355:web:009a48b7c18663253fa40e"
+};
+
+var PWD     = '1234';
+var NB_SEQ  = 3;
+var NB_CIB  = 5;
+var KEY     = 'biathlon_v7';
+
+/* ── ÉTAT ───────────────────────────────────────────────────── */
+var S = {
+  prenom:'', nom:'', classe:'',
+  seqIdx:0, phase:'idle',
+  sequences:[],
+  courseDureMs:0,
+  ciblesEtat:[], ciblesRang:[],
+  chronoGlobalStart:0,  // timestamp absolu début course 1 — ne change plus
+  phaseStart:0,         // timestamp début de la phase courante
+  chronoRAF:null
+};
+var profListener = null;
+var allData = {};
+var app, db, dbRef, firebaseOK = false;
+
+/* ══════════════════════════════════════════════════════════════
+   FIREBASE
+══════════════════════════════════════════════════════════════ */
+function initFirebase() {
+  try {
+    app = firebase.initializeApp(firebaseConfig);
+    db  = firebase.database();
+    dbRef = db.ref('biathlon/resultats');
+    firebaseOK = true;
+  } catch(e) { firebaseOK = false; }
+}
+
+function sauverResultat(rec, cb) {
+  // Toujours sauver en local
+  try {
+    var local = JSON.parse(localStorage.getItem(KEY)||'[]');
+    local.push(rec);
+    localStorage.setItem(KEY, JSON.stringify(local));
+  } catch(e){}
+  if (firebaseOK && db) {
+    try { dbRef.push(rec, function(err){ if(cb) cb(); }); return; }
+    catch(e){}
+  }
+  if (cb) cb();
+}
+
+function lireLocal() {
+  try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch(e){ return []; }
+}
+function viderFirebase() {
+  if (firebaseOK && db) { try { dbRef.remove(); } catch(e){} }
+  try { localStorage.removeItem(KEY); } catch(e){}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   UTILITAIRES
+══════════════════════════════════════════════════════════════ */
+function goPage(id) {
+  var all = document.querySelectorAll('.page');
+  for (var i=0; i<all.length; i++) all[i].classList.remove('on');
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+
+// Affiche mm:ss à partir de millisecondes
+function msToMmss(ms) {
+  var s = Math.floor(ms/1000);
+  return pad(Math.floor(s/60))+':'+pad(s%60);
+}
+// Dixième de seconde
+function msToDix(ms) {
+  return '.'+Math.floor((ms%1000)/100);
+}
+function pad(n){ return n<10?'0'+n:''+n; }
+function mmss2s(str) {
+  if (!str||str==='--:--') return 0;
+  var p=str.split(':');
+  return (parseInt(p[0])||0)*60+(parseInt(p[1])||0);
+}
+function s2mmss(s) {
+  if (isNaN(s)||s<0) return '--:--';
+  return pad(Math.floor(s/60))+':'+pad(s%60);
+}
+function addTemps(arr) {
+  var t=0; for(var i=0;i<arr.length;i++) t+=mmss2s(arr[i]);
+  return s2mmss(t);
+}
+function showToast(msg, type) {
+  var el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='org'?'#f77f00':type==='red'?'#e63946':'#2dc653';
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){ el.classList.remove('show'); }, 2800);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CHRONO — requestAnimationFrame, UN SEUL CHRONO CONTINU
+   Le chrono démarre au début de la course 1 et ne s'arrête
+   qu'à la fin du tir 3. Chaque phase note son timestamp de
+   début/fin pour calculer sa durée propre.
+══════════════════════════════════════════════════════════════ */
+var _now = (typeof performance !== 'undefined' && performance.now)
+  ? function(){ return performance.now(); }
+  : function(){ return Date.now(); };
+
+var _rAF = window.requestAnimationFrame ||
+           window.webkitRequestAnimationFrame ||
+           window.mozRequestAnimationFrame ||
+           function(cb){ return setTimeout(cb, 16); };
+var _cAF = window.cancelAnimationFrame ||
+           window.webkitCancelAnimationFrame ||
+           window.mozCancelAnimationFrame ||
+           clearTimeout;
+
+// Démarre le chrono global (une seule fois, au début de la course 1)
+function lancerChronoGlobal() {
+  if (S.chronoRAF) { _cAF(S.chronoRAF); S.chronoRAF = null; }
+  S.chronoGlobalStart = _now();
+  _tickChrono();
+}
+
+// Arrête le chrono (fin du dernier tir)
+function stopChrono() {
+  if (S.chronoRAF) { _cAF(S.chronoRAF); S.chronoRAF = null; }
+}
+
+// Remet le chrono à zéro visuellement (page accueil / init)
+function resetChronoUI() {
+  stopChrono();
+  S.chronoGlobalStart = 0;
+  _setChronoDisplay('00:00', '.0', 'idle');
+  document.getElementById('chrono-lbl').className='chrono-lbl idle';
+  document.getElementById('chrono-lbl').textContent='—';
+  document.getElementById('phase-banner').className='phase-banner idle';
+  document.getElementById('phase-banner').textContent='EN ATTENTE';
+}
+
+function _setChronoDisplay(mmss, dix, colorClass) {
+  var v  = document.getElementById('chrono-val');
+  var ms = document.getElementById('chrono-ms');
+  if (!v) return;
+  // Met à jour le texte sans toucher au span enfant
+  v.firstChild.nodeValue = mmss;
+  if (ms) ms.textContent = dix;
+  v.className = 'chrono-val ' + colorClass;
+}
+
+function _tickChrono() {
+  var elapsed = _now() - S.chronoGlobalStart;
+  _setChronoDisplay(msToMmss(elapsed), msToDix(elapsed), S.phase==='tir'?'tir':'course');
+  S.chronoRAF = _rAF(_tickChrono);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════════ */
+document.getElementById('btn-eleve').addEventListener('click', function(){ goPage('p-ident'); });
+document.getElementById('btn-prof').addEventListener('click', function(){
+  document.getElementById('pwd-in').value='';
+  document.getElementById('pwd-err').style.display='none';
+  goPage('p-pwd');
+});
+document.getElementById('btn-pwd-back').addEventListener('click', function(){ goPage('p-home'); });
+document.getElementById('btn-pwd-ok').addEventListener('click', checkPwd);
+document.getElementById('pwd-in').addEventListener('keydown', function(e){ if(e.key==='Enter') checkPwd(); });
+
+function checkPwd() {
+  if (document.getElementById('pwd-in').value === PWD) {
+    goPage('p-teacher');
+    demarrerEcouteProf();
+  } else {
+    document.getElementById('pwd-err').style.display='block';
+    document.getElementById('pwd-in').select();
+  }
+}
+document.getElementById('btn-tea-back').addEventListener('click', function(){
+  if (profListener && dbRef) { try { dbRef.off('value', profListener); } catch(e){} profListener=null; }
+  goPage('p-home');
+});
+document.getElementById('btn-ident-back').addEventListener('click', function(){ goPage('p-home'); });
+
+/* ══════════════════════════════════════════════════════════════
+   IDENTIFICATION
+══════════════════════════════════════════════════════════════ */
+document.getElementById('btn-commencer').addEventListener('click', function(){
+  var p=document.getElementById('s-prenom').value.trim();
+  var c=document.getElementById('s-classe').value;
+  if (!p){ showToast('⚠️ Entre ton prénom !','org'); return; }
+  if (!c){ showToast('⚠️ Sélectionne ta classe !','org'); return; }
+  S.prenom=p; S.nom=document.getElementById('s-nom').value.trim(); S.classe=c;
+  S.seqIdx=0; S.phase='idle'; S.sequences=[];
+  S.chronoGlobalStart=0; S.phaseStart=0;
+  _detailOpen=false;
+  goPage('p-seq');
+  document.getElementById('seq-eleve-lbl').textContent=p+(S.nom?' '+S.nom:'')+' · '+c;
+  // Réinitialiser la vue détail
+  document.getElementById('seq-main-view').style.display='';
+  document.getElementById('detail-view').classList.remove('show');
+  document.getElementById('btn-detail-toggle').style.display='none';
+  document.getElementById('btn-detail-toggle').classList.remove('active');
+  document.getElementById('btn-detail-toggle').textContent='📋 Détail';
+  majDots(); majRecap();
+  resetChronoUI();
+  setBtn('green','▶ DÉMARRER LA COURSE');
+  document.getElementById('btn-envoyer').style.display='none';
+  document.getElementById('btn-action').style.display='block';
+});
+
+/* ══════════════════════════════════════════════════════════════
+   BOUTON PRINCIPAL — logique de séquence
+══════════════════════════════════════════════════════════════ */
+document.getElementById('btn-action').addEventListener('click', function(){
+  if (S.phase==='idle')        demarrerCourse();
+  else if (S.phase==='course') stopperCourse();
+  else if (S.phase==='tir')    stopperTir();
+});
+
+/* ── Démarrer course ────────────────────────────────────────── */
+function demarrerCourse() {
+  S.phase='course';
+  var n=S.seqIdx+1;
+  // Démarre le chrono global UNE SEULE FOIS (course 1)
+  if (S.seqIdx===0) {
+    lancerChronoGlobal();
+  }
+  // Note le début de cette phase
+  S.phaseStart = _now();
+  setPhaseBanner('course','🏃 COURSE '+n);
+  document.getElementById('chrono-lbl').className='chrono-lbl course';
+  document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
+  document.getElementById('cibles-bloc').className='cibles-bloc';
+  setBtn('red','⏹ STOP — FIN COURSE '+n);
+  majRecap();
+}
+
+/* ── Stopper course → démarrer tir INSTANTANÉMENT ────────────── */
+function stopperCourse() {
+  var now = _now();
+  // Durée exacte de cette course = now - début de phase
+  S.courseDureMs = now - S.phaseStart;
+  // Le tir commence exactement maintenant — zéro latence
+  S.phaseStart = now;
+  // Le chrono global CONTINUE de tourner sans interruption
+
+  S.phase='tir';
+  S.ciblesEtat=[null,null,null,null,null];
+  S.ciblesRang=[];
+  afficherCibles();
+
+  var n=S.seqIdx+1;
+  setPhaseBanner('tir','🔫 TIR '+n);
+  document.getElementById('chrono-lbl').className='chrono-lbl tir';
+  document.getElementById('chrono-lbl').textContent='TIR '+n+' EN COURS';
+  document.getElementById('cibles-bloc').className='cibles-bloc show';
+  setBtn('cyan','⏹ STOP — FIN TIR '+n);
+  majRecap();
+}
+
+/* ── Stopper tir → enregistrer + enchaîner DIRECTEMENT ─────── */
+function stopperTir() {
+  var now = _now();
+  // Durée exacte du tir
+  var tirDureMs = now - S.phaseStart;
+
+  var nb=0, detail=[];
+  for (var i=0; i<NB_CIB; i++) {
+    var v=S.ciblesEtat[i];
+    var t=(v!==null&&v.touche);
+    if(t) nb++;
+    detail.push(t);
+  }
+  S.sequences.push({
+    course: msToMmss(S.courseDureMs),
+    tir:    msToMmss(tirDureMs),
+    cibles: nb,
+    detail: detail,
+    rang:   S.ciblesRang ? S.ciblesRang.slice() : []
+  });
+
+  document.getElementById('cibles-bloc').className='cibles-bloc';
+  S.seqIdx++;
+  majDots(); majRecap();
+  showDetailToggle(); // dès la 1ère séquence terminée
+
+  if (S.seqIdx < NB_SEQ) {
+    // ── Enchaînement IMMÉDIAT sur la course suivante ──────────
+    // Le chrono continue de tourner, on note juste le nouveau phaseStart
+    S.phaseStart = now;
+    S.phase='course';
+    var n=S.seqIdx+1;
+    setPhaseBanner('course','🏃 COURSE '+n);
+    document.getElementById('chrono-lbl').className='chrono-lbl course';
+    document.getElementById('chrono-lbl').textContent='COURSE '+n+' EN COURS';
+    document.getElementById('cibles-bloc').className='cibles-bloc';
+    setBtn('red','⏹ STOP — FIN COURSE '+n);
+    showToast('🏃 Course '+n+' !','org');
+  } else {
+    // ── Fin de la course complète ─────────────────────────────
+    // Figer l'affichage sur le temps final AVANT d'arrêter le rAF
+    var finalMs = _now() - S.chronoGlobalStart;
+    stopChrono();
+    _setChronoDisplay(msToMmss(finalMs), msToDix(finalMs), 'course');
+    S.phase='fini';
+    setPhaseBanner('fini','🎉 BRAVO, C\'EST FINI !');
+    document.getElementById('chrono-lbl').className='chrono-lbl course';
+    document.getElementById('chrono-lbl').textContent='TEMPS TOTAL';
+    document.getElementById('btn-action').style.display='none';
+    document.getElementById('btn-envoyer').style.display='block';
+    showToast('🎉 Les 3 séquences sont terminées !');
+    // Rafraîchir le détail s'il est ouvert
+    if (_detailOpen) renderDetailView();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CIBLES
+══════════════════════════════════════════════════════════════ */
+function afficherCibles() {
+  var lbl=document.getElementById('cibles-pos-labels');
+  lbl.innerHTML='';
+  for (var i=0;i<NB_CIB;i++) {
+    var d=document.createElement('div');
+    d.className='pos-lbl'; d.textContent='C'+(i+1);
+    lbl.appendChild(d);
+  }
+  var g=document.getElementById('cibles-grille');
+  g.innerHTML='';
+  for (var i=0;i<NB_CIB;i++) {
+    var b=document.createElement('button');
+    b.className='cible'; b.innerHTML='🎯';
+    b.setAttribute('data-i',i);
+    // touch + click pour compatibilité max
+    b.addEventListener('touchend', clicCibleTouch, {passive:false});
+    b.addEventListener('click', clicCible);
+    g.appendChild(b);
+  }
+  majScoreCibles(); majOrdreAffichage();
+}
+
+// Anti-doublon touch+click sur mobile
+var _lastTouch = 0;
+function clicCibleTouch(e) {
+  e.preventDefault();
+  _lastTouch = Date.now();
+  clicCible.call(this, e);
+}
+function clicCible(e) {
+  if (Date.now() - _lastTouch < 350 && e.type==='click') return;
+  var i=parseInt(e.currentTarget.getAttribute('data-i'));
+  var cur=S.ciblesEtat[i];
+  if (cur===null) {
+    var rang=S.ciblesRang.length+1;
+    S.ciblesEtat[i]={rang:rang,touche:true};
+    S.ciblesRang.push({pos:i,touche:true});
+  } else if (cur.touche) {
+    S.ciblesEtat[i]={rang:cur.rang,touche:false};
+    for (var k=0;k<S.ciblesRang.length;k++)
+      if(S.ciblesRang[k].pos===i) S.ciblesRang[k].touche=false;
+  } else {
+    S.ciblesEtat[i]=null;
+    S.ciblesRang=S.ciblesRang.filter(function(x){return x.pos!==i;});
+    for (var k=0;k<S.ciblesRang.length;k++) S.ciblesRang[k].rang=k+1;
+    for (var j=0;j<NB_CIB;j++) {
+      if (S.ciblesEtat[j]!==null) {
+        for (var k=0;k<S.ciblesRang.length;k++) {
+          if (S.ciblesRang[k].pos===j) S.ciblesEtat[j].rang=k+1;
+        }
+      }
+    }
+  }
+  majAffichageCibles(); majScoreCibles(); majOrdreAffichage();
+}
+
+function majAffichageCibles() {
+  var btns=document.getElementById('cibles-grille').querySelectorAll('.cible');
+  for (var i=0;i<NB_CIB;i++) {
+    var v=S.ciblesEtat[i];
+    if (v===null) { btns[i].className='cible'; btns[i].innerHTML='🎯'; }
+    else if (v.touche) { btns[i].className='cible touche'; btns[i].innerHTML='✅<div class="rang">'+v.rang+'</div>'; }
+    else { btns[i].className='cible rate'; btns[i].innerHTML='❌<div class="rang">'+v.rang+'</div>'; }
+  }
+}
+function majScoreCibles() {
+  var nb=0;
+  for (var i=0;i<NB_CIB;i++) if(S.ciblesEtat[i]!==null&&S.ciblesEtat[i].touche) nb++;
+  document.getElementById('cibles-score-val').textContent=nb;
+}
+function majOrdreAffichage() {
+  var el=document.getElementById('cibles-ordre');
+  if (!S.ciblesRang||!S.ciblesRang.length) {
+    el.innerHTML='<span style="color:rgba(255,255,255,.22);font-size:.73rem">Appuie sur tes cibles dans l\'ordre de tir</span>';
+    return;
+  }
+  var h='<span style="font-size:.68rem;color:rgba(255,255,255,.38);margin-right:.3rem;">Ordre :</span>';
+  for (var k=0;k<S.ciblesRang.length;k++) {
+    var r=S.ciblesRang[k];
+    var col=r.touche?'#2dc653':'#e63946';
+    h+='<span style="font-size:.76rem;font-weight:700;color:'+col+'">'+(r.touche?'✅':'❌')+' C'+(r.pos+1)+'</span>';
+    if (k<S.ciblesRang.length-1) h+='<span style="color:rgba(255,255,255,.18)">→</span>';
+  }
+  el.innerHTML=h;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ENVOYER
+══════════════════════════════════════════════════════════════ */
+document.getElementById('btn-envoyer').addEventListener('click', function(){
+  var s=S.sequences;
+  var tc=addTemps([s[0].course,s[1].course,s[2].course]);
+  var tt=addTemps([s[0].tir,s[1].tir,s[2].tir]);
+  var tth=s[0].cibles+s[1].cibles+s[2].cibles;
+  // Temps total = durée réelle depuis le départ (chrono global)
+  var totalMs = _now() - S.chronoGlobalStart;
+  var totTemps = msToMmss(totalMs);
+  var now=new Date();
+  var rec={
+    id:Date.now(), prenom:S.prenom, nom:S.nom, classe:S.classe,
+    date:now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}),
+    heure:now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
+    sequences:s, totCourse:tc, totTir:tt, totCibles:tth,
+    totTemps:totTemps
+  };
+  document.getElementById('btn-envoyer').disabled=true;
+  document.getElementById('btn-envoyer').textContent='⏳ Envoi...';
+  sauverResultat(rec, function(){
+    showToast('🎉 Résultats envoyés !');
+    setTimeout(function(){ goPage('p-home'); },2000);
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════════════════════════════ */
+function setBtn(color,label) {
+  var b=document.getElementById('btn-action');
+  b.style.display='block'; b.disabled=false;
+  b.className='btn-action btn-'+color; b.textContent=label;
+}
+function setPhaseBanner(type, text) {
+  var el=document.getElementById('phase-banner');
+  el.className='phase-banner '+type;
+  el.textContent=text;
+}
+function majDots() {
+  var h='';
+  for (var i=0;i<NB_SEQ;i++) {
+    var c=i<S.seqIdx?'done':i===S.seqIdx?'cur':'';
+    h+='<div class="sdot '+c+'"></div>';
+  }
+  document.getElementById('seq-dots').innerHTML=h;
+}
+function majRecap() {
+  var h='';
+  for (var i=0;i<NB_SEQ;i++) {
+    var done=i<S.seqIdx, cur=i===S.seqIdx;
+    var vals='<div class="recap-data">—</div>';
+    if (done&&S.sequences[i]) {
+      var sq=S.sequences[i];
+      vals='<div class="recap-data">⏱<b>'+sq.course+'</b> 🔫<b>'+sq.tir+'</b> 🎯<b>'+sq.cibles+'/5</b></div>';
+    } else if (cur&&S.phase!=='idle') {
+      vals='<div class="recap-data" style="color:var(--ora)">En cours...</div>';
+    }
+    h+='<div class="recap-row '+(done?'done':cur?'cur':'')+'">'
+      +'<span class="recap-seq-name '+(done?'done':cur?'cur':'')+'">'
+      +(done?'✅':cur?'▶':'⏳')+' Séquence '+(i+1)+'</span>'+vals+'</div>';
+  }
+  document.getElementById('recap-bloc').innerHTML=h;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VUE DÉTAIL — bascule & rendu
+══════════════════════════════════════════════════════════════ */
+var _detailOpen = false;
+
+document.getElementById('btn-detail-toggle').addEventListener('click', function(){
+  _detailOpen = !_detailOpen;
+  var mainView = document.getElementById('seq-main-view');
+  var detailView = document.getElementById('detail-view');
+  var btn = document.getElementById('btn-detail-toggle');
+  if (_detailOpen) {
+    mainView.style.display = 'none';
+    detailView.classList.add('show');
+    btn.classList.add('active');
+    btn.textContent = '⏱ Course';
+    renderDetailView();
+  } else {
+    mainView.style.display = '';
+    detailView.classList.remove('show');
+    btn.classList.remove('active');
+    btn.textContent = '📋 Détail';
+  }
+});
+
+// Appelé quand au moins 1 séquence est terminée
+function showDetailToggle() {
+  document.getElementById('btn-detail-toggle').style.display = 'block';
+}
+
+function renderDetailView() {
+  var seqs = S.sequences;  // séquences terminées
+  var el = document.getElementById('detail-view');
+  if (!seqs || seqs.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.3);font-size:.9rem;">Aucune séquence terminée pour l\'instant.</div>';
+    return;
+  }
+
+  var h = '';
+
+  // ── SECTION COURSES ──────────────────────────────────────────
+  h += '<div class="detail-section">';
+  h += '<div class="detail-section-head course">🏃 Temps de course</div>';
+  h += '<div class="detail-rows">';
+  var totCourseS = 0;
+  for (var i = 0; i < seqs.length; i++) {
+    var s = mmss2s(seqs[i].course);
+    totCourseS += s;
+    h += '<div class="detail-row">'
+      + '<span class="detail-row-lbl">Course ' + (i+1) + '</span>'
+      + '<span class="detail-row-val ora">' + seqs[i].course + '</span>'
+      + '</div>';
+  }
+  // Lignes vides pour les séquences pas encore faites
+  for (var i = seqs.length; i < NB_SEQ; i++) {
+    h += '<div class="detail-row">'
+      + '<span class="detail-row-lbl">Course ' + (i+1) + '</span>'
+      + '<span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span>'
+      + '</div>';
+  }
+  h += '<div class="detail-row total-row">'
+    + '<span class="detail-row-lbl" style="font-weight:900;color:var(--ora)">Total course</span>'
+    + '<span class="detail-row-val ora">' + (seqs.length>0 ? s2mmss(totCourseS) : '—') + '</span>'
+    + '</div>';
+  h += '</div></div>'; // fin section courses
+
+  // ── SECTION TIRS ─────────────────────────────────────────────
+  h += '<div class="detail-section">';
+  h += '<div class="detail-section-head tir">🔫 Temps de tir</div>';
+  h += '<div class="detail-rows">';
+  var totTirS = 0;
+  for (var i = 0; i < seqs.length; i++) {
+    var s = mmss2s(seqs[i].tir);
+    totTirS += s;
+    h += '<div class="detail-row">'
+      + '<span class="detail-row-lbl">Tir ' + (i+1) + '</span>'
+      + '<span class="detail-row-val cyan">' + seqs[i].tir + '</span>'
+      + '</div>';
+  }
+  for (var i = seqs.length; i < NB_SEQ; i++) {
+    h += '<div class="detail-row">'
+      + '<span class="detail-row-lbl">Tir ' + (i+1) + '</span>'
+      + '<span class="detail-row-val" style="color:rgba(255,255,255,.18)">—</span>'
+      + '</div>';
+  }
+  h += '<div class="detail-row total-row">'
+    + '<span class="detail-row-lbl" style="font-weight:900;color:var(--cyan)">Total tir</span>'
+    + '<span class="detail-row-val cyan">' + (seqs.length>0 ? s2mmss(totTirS) : '—') + '</span>'
+    + '</div>';
+  h += '</div>';
+
+  // ── VISUALISATION CIBLES PAR TIR ─────────────────────────────
+  for (var i = 0; i < seqs.length; i++) {
+    var sq = seqs[i];
+    h += '<div style="border-top:1px solid rgba(0,200,240,.15);">';
+    h += '<div class="detail-tir-bloc">';
+
+    // Déterminer la direction : première cible touchée (rang 0 dans sq.rang)
+    var direction = detecterDirection(sq.rang);
+    h += '<div class="detail-tir-dir">' + direction + '</div>';
+
+    // Construire l'affichage dans l'ordre de tir
+    h += '<div class="detail-cibles-vis">';
+
+    if (sq.rang && sq.rang.length > 0) {
+      // Afficher dans l'ordre de tir (sq.rang est déjà trié par ordre de tir)
+      for (var k = 0; k < sq.rang.length; k++) {
+        var r = sq.rang[k];
+        var cls = r.touche ? 'ok' : 'ko';
+        var ico = r.touche ? '✅' : '❌';
+        h += '<div class="detail-cible ' + cls + '">'
+          + ico
+          + '<div class="detail-cible-num">C' + (r.pos+1) + '</div>'
+          + '</div>';
+        if (k < sq.rang.length - 1) h += '<div class="detail-arrow">→</div>';
+      }
+      // Cibles non tirées
+      var tiresPoses = sq.rang.map(function(x){ return x.pos; });
+      var nonTires = [];
+      for (var k = 0; k < NB_CIB; k++) if (tiresPoses.indexOf(k) < 0) nonTires.push(k);
+      if (nonTires.length > 0) {
+        h += '<div class="detail-arrow" style="opacity:.3">|</div>';
+        for (var k = 0; k < nonTires.length; k++) {
+          h += '<div class="detail-cible skip">—<div class="detail-cible-num">C' + (nonTires[k]+1) + '</div></div>';
+        }
+      }
+    } else if (sq.detail) {
+      // Fallback : detail[] sans ordre
+      for (var k = 0; k < NB_CIB; k++) {
+        var cls = sq.detail[k] ? 'ok' : 'ko';
+        var ico = sq.detail[k] ? '✅' : '❌';
+        h += '<div class="detail-cible ' + cls + '">' + ico
+          + '<div class="detail-cible-num">C' + (k+1) + '</div></div>';
+        if (k < NB_CIB - 1) h += '<div class="detail-arrow">→</div>';
+      }
+    }
+    h += '</div>'; // detail-cibles-vis
+
+    // Score du tir
+    var nb = sq.cibles;
+    h += '<div class="detail-score-line">Score tir '+(i+1)+' : <b>'+nb+'/5</b>'
+      + ' &nbsp;(' + (nb===5?'Parfait !':nb>=3?'Bien':'À améliorer') + ')'
+      + '</div>';
+    h += '</div></div>'; // detail-tir-bloc + border-top div
+  }
+
+  h += '</div>'; // fin section tirs
+
+  // ── TEMPS GLOBAL ─────────────────────────────────────────────
+  if (S.phase === 'fini') {
+    var globalMs = _now() - S.chronoGlobalStart;
+    // S'il est figé, on utilise la somme calculée
+    var globalStr = msToMmss(globalMs > 0 ? globalMs : (totCourseS + totTirS) * 1000);
+    h += '<div class="detail-section">';
+    h += '<div class="detail-section-head total">⏱ Temps global</div>';
+    h += '<div class="detail-rows">';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Total course</span>'
+      + '<span class="detail-row-val ora">' + s2mmss(totCourseS) + '</span></div>';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Total tir</span>'
+      + '<span class="detail-row-val cyan">' + s2mmss(totTirS) + '</span></div>';
+    h += '<div class="detail-row total-row">'
+      + '<span class="detail-row-lbl" style="font-weight:900;color:var(--grn);font-size:.9rem">⏱ TEMPS TOTAL</span>'
+      + '<span class="detail-row-val grn" style="font-size:1.2rem">' + globalStr + '</span>'
+      + '</div>';
+    // Score cibles total
+    var totCib = 0;
+    for (var i=0;i<seqs.length;i++) totCib += seqs[i].cibles;
+    h += '<div class="detail-row total-row">'
+      + '<span class="detail-row-lbl" style="font-weight:900;color:var(--grn)">🎯 Total cibles</span>'
+      + '<span class="detail-row-val grn">' + totCib + '/15</span>'
+      + '</div>';
+    h += '</div></div>';
+  } else if (seqs.length > 0) {
+    // Course en cours : temps partiel
+    h += '<div class="detail-section">';
+    h += '<div class="detail-section-head total">⏱ Partiel</div>';
+    h += '<div class="detail-rows">';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Course terminées</span>'
+      + '<span class="detail-row-val ora">' + s2mmss(totCourseS) + '</span></div>';
+    h += '<div class="detail-row"><span class="detail-row-lbl">Tirs terminés</span>'
+      + '<span class="detail-row-val cyan">' + s2mmss(totTirS) + '</span></div>';
+    h += '</div></div>';
+  }
+
+  el.innerHTML = h;
+}
+
+// Détecte si le tir a commencé par la gauche ou la droite
+// Les cibles sont numérotées 1-5 de gauche à droite (pos 0-4)
+// La première cible tirée (rang[0].pos) détermine la direction
+function detecterDirection(rang) {
+  if (!rang || rang.length === 0) return 'Ordre non enregistré';
+  var premierPos = rang[0].pos; // 0=C1(gauche) à 4=C5(droite)
+  var milieu = Math.floor(NB_CIB / 2); // = 2 pour 5 cibles
+  if (premierPos < milieu) return '← Début par la GAUCHE (C' + (premierPos+1) + ')';
+  if (premierPos > milieu) return '→ Début par la DROITE (C' + (premierPos+1) + ')';
+  return '↔ Début par le CENTRE (C' + (premierPos+1) + ')';
+}
+
+
+function demarrerEcouteProf() {
+  var statusEl=document.getElementById('cnx-status');
+  allData={};
+  if (firebaseOK&&db) {
+    statusEl.className='cnx-status load'; statusEl.textContent='⏳ Connexion...';
+    try {
+      profListener=dbRef.on('value',function(snap){
+        statusEl.className='cnx-status ok'; statusEl.textContent='🟢 Connecté';
+        allData={};
+        if (snap.val()) { var raw=snap.val(); for(var k in raw) allData[k]=raw[k]; }
+        renderProf(); majEvoFiltres();
+      },function(err){
+        statusEl.className='cnx-status err'; statusEl.textContent='🔴 Hors ligne';
+        useFallbackProf(statusEl);
+      });
+    } catch(e){ useFallbackProf(statusEl); }
+  } else { useFallbackProf(statusEl); }
+}
+
+function useFallbackProf(statusEl) {
+  statusEl.className='cnx-status err'; statusEl.textContent='⚠️ Local';
+  function reload(){
+    var local=lireLocal(); allData={};
+    for(var i=0;i<local.length;i++) allData['l'+i]=local[i];
+    renderProf(); majEvoFiltres();
+  }
+  reload();
+  setInterval(reload,3000);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROF — TABLEAU RÉSULTATS
+══════════════════════════════════════════════════════════════ */
+function getArr(classeF, dateF, eleveF) {
+  var arr=[];
+  for (var k in allData) arr.push(allData[k]);
+  if (classeF) arr=arr.filter(function(r){return r.classe===classeF;});
+  if (dateF)   arr=arr.filter(function(r){return r.date===dateF;});
+  if (eleveF)  arr=arr.filter(function(r){return (r.prenom+' '+(r.nom||'')).trim()===eleveF;});
+  return arr;
+}
+
+document.getElementById('t-filter-classe').addEventListener('change', function(){ syncEleveFilter(); renderProf(); });
+document.getElementById('t-filter-date').addEventListener('change', renderProf);
+document.getElementById('t-filter-eleve').addEventListener('change', renderProf);
+document.getElementById('btn-export').addEventListener('click', exportCSV);
+document.getElementById('btn-vider').addEventListener('click', function(){
+  if (confirm('Supprimer TOUS les résultats ?')) {
+    viderFirebase(); allData={}; renderProf(); showToast('🗑️ Données supprimées','red');
+  }
+});
+
+function syncEleveFilter() {
+  var classeSel=document.getElementById('t-filter-classe').value;
+  var arr=getArr(classeSel,'','');
+  // Dates
+  var dates=[];
+  for (var i=0;i<arr.length;i++) if(arr[i].date&&dates.indexOf(arr[i].date)<0) dates.push(arr[i].date);
+  dates.sort().reverse();
+  var dateEl=document.getElementById('t-filter-date');
+  var dateSel=dateEl.value;
+  dateEl.innerHTML='<option value="">Toutes les dates</option>';
+  for (var i=0;i<dates.length;i++) dateEl.innerHTML+='<option'+(dates[i]===dateSel?' selected':'')+'>'+dates[i]+'</option>';
+  // Élèves
+  var eleves=[];
+  for (var i=0;i<arr.length;i++){
+    var en=(arr[i].prenom+' '+(arr[i].nom||'')).trim();
+    if(eleves.indexOf(en)<0) eleves.push(en);
+  }
+  eleves.sort();
+  var eleveEl=document.getElementById('t-filter-eleve');
+  var eleveSel=eleveEl.value;
+  eleveEl.innerHTML='<option value="">Tous les élèves</option>';
+  for (var i=0;i<eleves.length;i++) eleveEl.innerHTML+='<option'+(eleves[i]===eleveSel?' selected':'')+'>'+eleves[i]+'</option>';
+}
+
+function renderProf() {
+  var classeSel=document.getElementById('t-filter-classe').value;
+  var dateSel=document.getElementById('t-filter-date').value;
+  var eleveSel=document.getElementById('t-filter-eleve').value;
+
+  // Mise à jour filtre classe
+  var allArr=[];
+  for (var k in allData) allArr.push(allData[k]);
+  var classes=[];
+  for (var i=0;i<allArr.length;i++) if(allArr[i].classe&&classes.indexOf(allArr[i].classe)<0) classes.push(allArr[i].classe);
+  classes.sort();
+  var cEl=document.getElementById('t-filter-classe');
+  var cSel=cEl.value;
+  cEl.innerHTML='<option value="">Toutes les classes</option>';
+  for (var i=0;i<classes.length;i++) cEl.innerHTML+='<option'+(classes[i]===cSel?' selected':'')+'>'+classes[i]+'</option>';
+
+  syncEleveFilter();
+
+  var filt=getArr(classeSel,dateSel,eleveSel);
+  filt=filt.slice().sort(function(a,b){
+    var na=(a.nom||'').toLowerCase()+' '+(a.prenom||'').toLowerCase();
+    var nb=(b.nom||'').toLowerCase()+' '+(b.prenom||'').toLowerCase();
+    return na<nb?-1:na>nb?1:0;
+  });
+
+  var n=filt.length;
+  var mH=n?(filt.reduce(function(a,r){return a+r.totCibles;},0)/n).toFixed(1):'--';
+  var mC=n?s2mmss(Math.round(filt.reduce(function(a,r){return a+mmss2s(r.totCourse);},0)/n)):'--';
+  var mT=n?s2mmss(Math.round(filt.reduce(function(a,r){return a+mmss2s(r.totTir);},0)/n)):'--';
+  document.getElementById('t-stats').innerHTML=
+    '<div class="stat-c"><div class="stat-n">'+n+'</div><div class="stat-l">Élèves</div></div>'+
+    '<div class="stat-c"><div class="stat-n">'+mH+'/15</div><div class="stat-l">Moy. cibles</div></div>'+
+    '<div class="stat-c"><div class="stat-n">'+mC+'</div><div class="stat-l">Moy. course</div></div>'+
+    '<div class="stat-c"><div class="stat-n">'+mT+'</div><div class="stat-l">Moy. tir</div></div>';
+
+  var tb=document.getElementById('t-body');
+  if (!filt.length){
+    tb.innerHTML='<tr><td colspan="16"><div class="empty-t">📭 Aucun résultat</div></td></tr>';
+    return;
+  }
+  var pc=function(h){return h>=4?'good':h>=2?'mid':'low';};
+  var pt=function(h){return h>=12?'good':h>=7?'mid':'low';};
+  var h='';
+  for (var i=0;i<filt.length;i++){
+    var r=filt[i];
+    h+='<tr onclick="ouvrirModalEleve(\''+encodeURIComponent(r.prenom+' '+(r.nom||'').trim())+'\')" style="cursor:pointer">';
+    h+='<td><span class="sn">'+r.prenom+' '+(r.nom||'')+'</span></td>';
+    h+='<td><span class="ct">'+r.classe+'</span></td>';
+    h+='<td class="c" style="color:#888;font-size:.72rem">'+(r.date||'--')+'<br>'+r.heure+'</td>';
+    for (var j=0;j<3;j++){
+      var sq=r.sequences[j];
+      var pts='<div class="cib-bloc"><div class="cib-rang">';
+      if (sq.rang&&sq.rang.length) {
+        for (var k=0;k<sq.rang.length;k++){
+          var rv=sq.rang[k];
+          pts+='<div class="cib-item"><div class="cib-pt '+(rv.touche?'ok':'ko')+'"></div><div class="cib-num">C'+(rv.pos+1)+'</div></div>';
+          if(k<sq.rang.length-1) pts+='<span class="cib-arrow">›</span>';
+        }
+        var tires=sq.rang.map(function(x){return x.pos;});
+        for (var k=0;k<5;k++) if(tires.indexOf(k)<0) pts+='<div class="cib-item"><div class="cib-pt ko"></div><div class="cib-num" style="color:#e63946">C'+(k+1)+'</div></div>';
+      } else {
+        for (var k=0;k<5;k++) pts+='<div class="cib-pt '+(sq.detail&&sq.detail[k]?'ok':k<sq.cibles?'ok':'ko')+'"></div>';
+      }
+      pts+='</div><div style="font-size:.65rem;color:#888;font-weight:700">'+sq.cibles+'/5</div></div>';
+      h+='<td class="c">'+sq.course+'</td><td class="c">'+sq.tir+'</td><td class="c">'+pts+'</td>';
+    }
+    h+='<td class="c"><span class="tps">'+r.totCourse+'</span></td>';
+    h+='<td class="c"><span class="tps">'+r.totTir+'</span></td>';
+    h+='<td class="c"><span class="pill '+pt(r.totCibles)+'">'+r.totCibles+'/15</span></td>';
+    h+='<td class="c"><span class="tps">'+r.totTemps+'</span></td></tr>';
+  }
+  tb.innerHTML=h;
+}
+
+/* ── EXPORT CSV ─────────────────────────────────────────────── */
+function exportCSV() {
+  var classeSel=document.getElementById('t-filter-classe').value;
+  var dateSel=document.getElementById('t-filter-date').value;
+  var eleveSel=document.getElementById('t-filter-eleve').value;
+  var filt=getArr(classeSel,dateSel,eleveSel);
+  if (!filt.length){ showToast('Aucun résultat','org'); return; }
+  var csv='"Prénom";"Nom";"Classe";"Date";"Heure";"Course 1";"Tir 1";"Cibles 1";"Course 2";"Tir 2";"Cibles 2";"Course 3";"Tir 3";"Cibles 3";"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
+  for (var i=0;i<filt.length;i++){
+    var r=filt[i];
+    csv+='"'+r.prenom+'";"'+(r.nom||'')+'\";"'+r.classe+'";"'+(r.date||'')+'\";"'+r.heure+'"';
+    for (var j=0;j<3;j++) csv+=';"'+r.sequences[j].course+'";"'+r.sequences[j].tir+'";"'+r.sequences[j].cibles+'/5"';
+    csv+=';"'+r.totCourse+'";"'+r.totTir+'";"'+r.totCibles+'/15";"'+r.totTemps+'"\r\n';
+  }
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='biathlon_'+new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')+'.csv';
+  a.click();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL HISTORIQUE ÉLÈVE + TABLEAU COMPARATIF
+══════════════════════════════════════════════════════════════ */
+document.getElementById('modal-close').addEventListener('click', function(){
+  document.getElementById('modal-eleve').classList.remove('open');
+});
+document.getElementById('modal-eleve').addEventListener('click', function(e){
+  if(e.target===this) this.classList.remove('open');
+});
+
+function ouvrirModalEleve(encodedName) {
+  var name=decodeURIComponent(encodedName);
+  var parts=name.trim().split(' ');
+  var prenom=parts[0], nom=parts.slice(1).join(' ');
+  // Récupérer toutes les sessions de cet élève (toutes dates)
+  var allArr=[]; for(var k in allData) allArr.push(allData[k]);
+  var sessions=allArr.filter(function(r){
+    return r.prenom===prenom && (r.nom||'')===(nom||'');
+  });
+  sessions.sort(function(a,b){ return (a.date+a.heure)<(b.date+b.heure)?-1:1; });
+
+  document.getElementById('modal-eleve-title').textContent='📋 '+name+' — '+sessions.length+' séance(s)';
+
+  // Liste séances
+  var h='';
+  for (var i=0;i<sessions.length;i++){
+    var s=sessions[i];
+    h+='<div class="session-card"><div class="session-card-date">📅 '+s.date+' à '+s.heure+'  ·  '+s.classe+'</div>'
+      +'<div class="session-card-data">'
+      +'<span>🏃 '+s.totCourse+'</span>'
+      +'<span>🔫 '+s.totTir+'</span>'
+      +'<span>🎯 '+s.totCibles+'/15</span>'
+      +'<span>⏱ '+s.totTemps+'</span>'
+      +'</div></div>';
+  }
+  document.getElementById('modal-session-list').innerHTML=h||'<p style="color:#aaa">Aucune séance.</p>';
+
+  // Tableau comparatif
+  if (sessions.length >= 2) {
+    var tc='<div style="font-size:.8rem;font-weight:900;color:#1a3a5c;margin-bottom:.6rem">📈 Évolution séance à séance</div>';
+    tc+='<div style="overflow-x:auto"><table class="comp-table"><thead><tr>'
+      +'<th>Séance</th><th class="c">Tot.Course</th><th class="c">Δ</th>'
+      +'<th class="c">Tot.Tir</th><th class="c">Δ</th>'
+      +'<th class="c">Cibles</th><th class="c">Δ</th>'
+      +'<th class="c">Tps Total</th><th class="c">Δ</th>'
+      +'</tr></thead><tbody>';
+    for (var i=0;i<sessions.length;i++){
+      var s=sessions[i];
+      var prev=i>0?sessions[i-1]:null;
+      tc+='<tr>';
+      tc+='<td style="white-space:nowrap"><b>'+(i+1)+'.</b> '+s.date+'<br><span style="font-size:.65rem;color:#888">'+s.heure+'</span></td>';
+      // Course
+      var dc=prev?deltaTemps(s.totCourse,prev.totCourse):'';
+      tc+='<td class="c tps">'+s.totCourse+'</td><td class="c">'+dc+'</td>';
+      // Tir
+      var dt=prev?deltaTemps(s.totTir,prev.totTir):'';
+      tc+='<td class="c tps">'+s.totTir+'</td><td class="c">'+dt+'</td>';
+      // Cibles
+      var dh=prev?deltaCibles(s.totCibles,prev.totCibles):'';
+      tc+='<td class="c"><span class="pill '+(s.totCibles>=12?'good':s.totCibles>=7?'mid':'low')+'">'+s.totCibles+'/15</span></td><td class="c">'+dh+'</td>';
+      // Total
+      var dtt=prev?deltaTemps(s.totTemps,prev.totTemps):'';
+      tc+='<td class="c tps">'+s.totTemps+'</td><td class="c">'+dtt+'</td>';
+      tc+='</tr>';
+    }
+    tc+='</tbody></table></div>';
+    document.getElementById('modal-comp-table').innerHTML=tc;
+  } else {
+    document.getElementById('modal-comp-table').innerHTML='<p style="color:#aaa;font-size:.8rem;margin-top:.8rem">Au moins 2 séances nécessaires pour comparer.</p>';
+  }
+
+  document.getElementById('modal-eleve').classList.add('open');
+}
+
+function deltaTemps(cur, prev) {
+  // Moins c'est mieux pour les temps
+  var dc=mmss2s(cur)-mmss2s(prev);
+  if (dc===0) return '<span class="delta same">→</span>';
+  var s=dc>0?'+':'';
+  var cls=dc<0?'better':'worse';
+  return '<span class="delta '+cls+'">'+s+s2mmss(Math.abs(dc))+'</span>';
+}
+function deltaCibles(cur, prev) {
+  // Plus c'est mieux pour les cibles
+  var d=cur-prev;
+  if (d===0) return '<span class="delta same">→</span>';
+  var s=d>0?'+':'';
+  var cls=d>0?'better':'worse';
+  return '<span class="delta '+cls+'">'+s+d+'</span>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ONGLETS PROF
+══════════════════════════════════════════════════════════════ */
+function showTab(tab) {
+  document.getElementById('tab-content-liste').style.display=tab==='liste'?'block':'none';
+  document.getElementById('tab-content-evo').style.display=tab==='evo'?'block':'none';
+  document.getElementById('tab-liste').classList.toggle('active',tab==='liste');
+  document.getElementById('tab-evo').classList.toggle('active',tab==='evo');
+  if (tab==='evo') renderEvo();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ONGLET ÉVOLUTION — graphiques par élève
+══════════════════════════════════════════════════════════════ */
+function majEvoFiltres() {
+  var allArr=[]; for(var k in allData) allArr.push(allData[k]);
+  var classes=[]; for(var i=0;i<allArr.length;i++) if(allArr[i].classe&&classes.indexOf(allArr[i].classe)<0) classes.push(allArr[i].classe);
+  classes.sort();
+  var cEl=document.getElementById('evo-filter-classe');
+  var cSel=cEl.value;
+  cEl.innerHTML='<option value="">Toutes les classes</option>';
+  for(var i=0;i<classes.length;i++) cEl.innerHTML+='<option'+(classes[i]===cSel?' selected':'')+'>'+classes[i]+'</option>';
+  majEvoEleveFiltres();
+}
+function majEvoEleveFiltres() {
+  var classeSel=document.getElementById('evo-filter-classe').value;
+  var allArr=[]; for(var k in allData) allArr.push(allData[k]);
+  if(classeSel) allArr=allArr.filter(function(r){return r.classe===classeSel;});
+  var eleves=[]; for(var i=0;i<allArr.length;i++){
+    var en=(allArr[i].prenom+' '+(allArr[i].nom||'')).trim();
+    if(eleves.indexOf(en)<0) eleves.push(en);
+  }
+  eleves.sort();
+  var eEl=document.getElementById('evo-filter-eleve');
+  var eSel=eEl.value;
+  eEl.innerHTML='<option value="">-- Sélectionner un élève --</option>';
+  for(var i=0;i<eleves.length;i++) eEl.innerHTML+='<option'+(eleves[i]===eSel?' selected':'')+'>'+eleves[i]+'</option>';
+}
+
+document.getElementById('evo-filter-classe').addEventListener('change', function(){ majEvoEleveFiltres(); renderEvo(); });
+document.getElementById('evo-filter-eleve').addEventListener('change', renderEvo);
+
+function renderEvo() {
+  var eSel=document.getElementById('evo-filter-eleve').value;
+  var cont=document.getElementById('evo-content');
+  if (!eSel) {
+    cont.innerHTML='<div class="evo-card"><div style="text-align:center;padding:2rem;color:#aaa;font-size:.9rem;">📊 Sélectionnez un élève</div></div>';
+    return;
+  }
+  var parts=eSel.trim().split(' ');
+  var prenom=parts[0], nom=parts.slice(1).join(' ');
+  var allArr=[]; for(var k in allData) allArr.push(allData[k]);
+  var sessions=allArr.filter(function(r){ return r.prenom===prenom&&(r.nom||'')===(nom||''); });
+  sessions.sort(function(a,b){ return (a.date+a.heure)<(b.date+b.heure)?-1:1; });
+
+  if (sessions.length===0) {
+    cont.innerHTML='<div class="evo-card"><div style="text-align:center;padding:2rem;color:#aaa;">Aucune donnée pour cet élève.</div></div>';
+    return;
+  }
+
+  var labels=sessions.map(function(s,i){ return 'S'+(i+1)+'\n'+s.date; });
+  var dataCourse=sessions.map(function(s){ return mmss2s(s.totCourse); });
+  var dataTir=sessions.map(function(s){ return mmss2s(s.totTir); });
+  var dataTotal=sessions.map(function(s){ return mmss2s(s.totTemps); });
+  var dataCibles=sessions.map(function(s){ return s.totCibles; });
+
+  var h='<div style="font-size:.9rem;font-weight:900;color:#1a3a5c;margin-bottom:1rem;">'+eSel+' — '+sessions.length+' séance(s)</div>';
+
+  // Graph temps
+  h+='<div class="evo-card">';
+  h+='<div class="evo-card-title">⏱ Temps (secondes)</div>';
+  h+='<div class="chart-wrap"><canvas id="chart-temps" height="180"></canvas></div></div>';
+
+  // Graph cibles
+  h+='<div class="evo-card" style="margin-top:0">';
+  h+='<div class="evo-card-title">🎯 Cibles touchées / 15</div>';
+  h+='<div class="chart-wrap"><canvas id="chart-cibles" height="150"></canvas></div></div>';
+
+  // Tableau résumé
+  h+='<div class="evo-card" style="margin-top:0;overflow-x:auto">';
+  h+='<div class="evo-card-title">📋 Détail par séquence</div>';
+  h+='<table class="comp-table"><thead><tr>'
+    +'<th>Séance</th><th class="c">C1</th><th class="c">T1</th><th class="c">🎯1</th>'
+    +'<th class="c">C2</th><th class="c">T2</th><th class="c">🎯2</th>'
+    +'<th class="c">C3</th><th class="c">T3</th><th class="c">🎯3</th>'
+    +'<th class="c">Total</th></tr></thead><tbody>';
+  for (var i=0;i<sessions.length;i++){
+    var s=sessions[i];
+    h+='<tr><td style="white-space:nowrap"><b>S'+(i+1)+'</b> '+s.date+'</td>';
+    for(var j=0;j<3;j++){
+      var sq=s.sequences[j];
+      h+='<td class="c" style="font-size:.72rem">'+sq.course+'</td>'
+        +'<td class="c" style="font-size:.72rem">'+sq.tir+'</td>'
+        +'<td class="c"><span class="pill '+(sq.cibles>=4?'good':sq.cibles>=2?'mid':'low')+'">'+sq.cibles+'</span></td>';
+    }
+    h+='<td class="c" style="font-weight:900">'+s.totTemps+'</td></tr>';
+  }
+  h+='</tbody></table></div>';
+
+  cont.innerHTML=h;
+
+  // Dessiner les graphiques avec canvas natif (pas de lib externe)
+  setTimeout(function(){
+    drawLineChart('chart-temps', labels,
+      [{label:'Course',data:dataCourse,color:'#f77f00'},
+       {label:'Tir',data:dataTir,color:'#00c8f0'},
+       {label:'Total',data:dataTotal,color:'#1a3a5c'}],
+      function(v){ return s2mmss(v); });
+    drawLineChart('chart-cibles', labels,
+      [{label:'Cibles',data:dataCibles,color:'#2dc653'}],
+      null, 0, 15);
+  }, 50);
+}
+
+/* ── GRAPHIQUES CANVAS (sans lib, cross-browser) ────────────── */
+function drawLineChart(canvasId, labels, series, fmtY, minY, maxY) {
+  var canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  var dpr=window.devicePixelRatio||1;
+  var W=canvas.offsetWidth||300;
+  var H=parseInt(canvas.getAttribute('height'))||180;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  var PAD={top:16,right:16,bottom:40,left:52};
+  var cW=W-PAD.left-PAD.right;
+  var cH=H-PAD.top-PAD.bottom;
+
+  // Min/max
+  var allVals=[]; for(var s=0;s<series.length;s++) for(var i=0;i<series[s].data.length;i++) allVals.push(series[s].data[i]);
+  var mn=minY!==undefined?minY:Math.max(0,Math.min.apply(null,allVals)*0.9);
+  var mx=maxY!==undefined?maxY:Math.max.apply(null,allVals)*1.1;
+  if(mn===mx){mn=0;mx=mx||1;}
+
+  // Fond
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+
+  // Grille
+  ctx.strokeStyle='#e8f0f8'; ctx.lineWidth=1;
+  var nLines=4;
+  for(var i=0;i<=nLines;i++){
+    var y=PAD.top+cH-(cH*(i/nLines));
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+cW,y); ctx.stroke();
+    var val=mn+(mx-mn)*(i/nLines);
+    ctx.fillStyle='#aaa'; ctx.font='600 10px system-ui,sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(fmtY?fmtY(Math.round(val)):Math.round(val), PAD.left-4, y+3);
+  }
+
+  // Axe X labels
+  var n=labels.length;
+  ctx.fillStyle='#888'; ctx.font='600 9px system-ui,sans-serif'; ctx.textAlign='center';
+  for(var i=0;i<n;i++){
+    var x=PAD.left+(n>1?cW*(i/(n-1)):cW/2);
+    var lns=labels[i].split('\n');
+    for(var li=0;li<lns.length;li++) ctx.fillText(lns[li],x,H-PAD.bottom+14+li*11);
+  }
+
+  // Séries
+  for(var s=0;s<series.length;s++){
+    var sr=series[s];
+    var dat=sr.data;
+    ctx.strokeStyle=sr.color; ctx.lineWidth=2.5;
+    ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath();
+    for(var i=0;i<dat.length;i++){
+      var x=PAD.left+(n>1?cW*(i/(n-1)):cW/2);
+      var y=PAD.top+cH-cH*((dat[i]-mn)/(mx-mn));
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // Points
+    ctx.fillStyle=sr.color;
+    for(var i=0;i<dat.length;i++){
+      var x=PAD.left+(n>1?cW*(i/(n-1)):cW/2);
+      var y=PAD.top+cH-cH*((dat[i]-mn)/(mx-mn));
+      ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+      // Valeur
+      ctx.fillStyle='#333'; ctx.font='700 9px system-ui,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(fmtY?fmtY(dat[i]):dat[i],x,y-8);
+      ctx.fillStyle=sr.color;
+    }
+    // Légende
+    ctx.fillStyle=sr.color; ctx.fillRect(PAD.left+s*60,2,12,8);
+    ctx.fillStyle='#555'; ctx.font='600 9px system-ui,sans-serif'; ctx.textAlign='left';
+    ctx.fillText(sr.label, PAD.left+s*60+15, 10);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DÉMARRAGE
+══════════════════════════════════════════════════════════════ */
+initFirebase();
+
+// Prevent double-tap zoom on iOS for action buttons
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+// Wake lock (évite que l'écran se verrouille pendant une séance)
+var wakeLock=null;
+function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(function(wl){ wakeLock=wl; }).catch(function(){});
+  }
+}
+document.getElementById('btn-commencer').addEventListener('click', requestWakeLock);
+document.addEventListener('visibilitychange', function(){
+  if (wakeLock!==null && document.visibilityState==='visible') requestWakeLock();
+});
+</script>
+</body>
+</html>
