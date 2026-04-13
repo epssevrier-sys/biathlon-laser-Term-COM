@@ -763,7 +763,7 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
   S.seqIdx=0; S.phase='idle'; S.sequences=[];
   S.nbSeq = getNbSeq(c);
   S.modeInverse = estPremiere(c); // true = Tir→Course (1ères)
-  S.chronoGlobalStart=0; S.phaseStart=0;
+  S.chronoGlobalStart=0; S.phaseStart=0; S.finalMs=0;
   _detailOpen=false;
   goPage('p-seq');
   var typeLabel = S.modeInverse ? '▶ DÉMARRER TIR 1' : '▶ DÉMARRER LA COURSE';
@@ -914,6 +914,7 @@ function _enregistrerSequenceTirSeul(tirDureMs, now) {
 
   // Fin de l'épreuve
   var finalMs = _now() - S.chronoGlobalStart;
+  S.finalMs = finalMs;
   stopChrono();
   _setChronoDisplay(msToMmss(finalMs), msToDix(finalMs), 'tir');
   S.phase='fini';
@@ -983,6 +984,7 @@ function _enregistrerSequence(courseDureMs, tirDureMs, now) {
   } else {
     // Fin de l'épreuve complète
     var finalMs = _now() - S.chronoGlobalStart;
+    S.finalMs = finalMs;
     stopChrono();
     _setChronoDisplay(msToMmss(finalMs), msToDix(finalMs), 'course');
     S.phase='fini';
@@ -1099,8 +1101,8 @@ document.getElementById('btn-envoyer').addEventListener('click', function(){
   }
   var tc=addTemps(courseTimes);
   var tt=addTemps(tirTimes);
-  var totalMs = _now() - S.chronoGlobalStart;
-  var totTemps = msToMmss(totalMs);
+  // Utiliser le temps figé à la fin de l'épreuve (pas _now() qui dérive)
+  var totTemps = msToMmss(S.finalMs || 0);
   var now=new Date();
   var rec={
     id:Date.now(), prenom:S.prenom, nom:S.nom, classe:S.classe,
@@ -1291,8 +1293,7 @@ function renderDetailView() {
   var totCib = 0; for (var i=0;i<seqs.length;i++) totCib += seqs[i].cibles;
 
   if (S.phase === 'fini') {
-    var globalMs = _now() - S.chronoGlobalStart;
-    var globalStr = msToMmss(globalMs > 0 ? globalMs : (totCourseS + totTirS) * 1000);
+    var globalStr = msToMmss(S.finalMs || 0);
     h += '<div class="detail-section"><div class="detail-section-head total">⏱ Bilan final</div><div class="detail-rows">';
     h += '<div class="detail-row"><span class="detail-row-lbl">Total course</span><span class="detail-row-val ora">'+s2mmss(totCourseS)+'</span></div>';
     h += '<div class="detail-row"><span class="detail-row-lbl">Total tir</span><span class="detail-row-val cyan">'+s2mmss(totTirS)+'</span></div>';
