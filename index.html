@@ -1558,6 +1558,9 @@ function exportCSV() {
   csvHead+=';"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
 
   var csv=csvHead;
+  // Fonction pour formater un temps pour le CSV (apostrophe = forcer texte dans Excel)
+  function tCsv(v){ return v && v!=='--' ? "'"+v : '-'; }
+
   for (var i=0;i<filt.length;i++){
     var r=filt[i];
     var rMode=r.mode||(estPremiere(r.classe)?'1ere':'term');
@@ -1565,9 +1568,9 @@ function exportCSV() {
     csv+='"'+r.prenom+'";"'+(r.nom||'')+'\";"'+r.classe+'";"'+rMode+'";"'+(r.date||'')+'\";"'+r.heure+'"';
     for(var j=0;j<maxSeq;j++){
       var sq=r.sequences&&r.sequences[j]?r.sequences[j]:null;
-      csv+=sq?';"'+(sq.course||'')+'\";"'+(sq.tir||'')+'\";"'+(sq.cibles||0)+'/5"':';"-";"-";"-"';
+      csv+=sq?';"'+tCsv(sq.course)+'\";"'+tCsv(sq.tir)+'\";"'+(sq.cibles||0)+'/5"':';"-";"-";"-"';
     }
-    csv+=';"'+r.totCourse+'";"'+r.totTir+'";"'+r.totCibles+'/'+(rNbSeq*5)+'";"'+r.totTemps+'"\r\n';
+    csv+=';"'+tCsv(r.totCourse)+'\";"'+tCsv(r.totTir)+'\";"'+r.totCibles+'/'+(rNbSeq*5)+'";"'+tCsv(r.totTemps)+'"\r\n';
   }
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
