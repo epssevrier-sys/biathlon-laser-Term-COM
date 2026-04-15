@@ -1558,8 +1558,11 @@ function exportCSV() {
   csvHead+=';"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
 
   var csv=csvHead;
-  // Fonction pour formater un temps pour le CSV (apostrophe = forcer texte dans Excel)
-  function tCsv(v){ return v && v!=='--' ? "'"+v : '-'; }
+  // Formate un temps mm:ss → "00m04s" pour éviter qu'Excel l'interprète comme heure
+  function tCsv(v){
+    if(!v || v==='-' || v==='--') return '-';
+    return v.replace(':','m')+'s'; // ex: 01:23 → 01m23s
+  }
 
   for (var i=0;i<filt.length;i++){
     var r=filt[i];
