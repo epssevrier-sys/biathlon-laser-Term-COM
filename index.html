@@ -416,6 +416,10 @@ canvas.evo-chart{max-width:100%;display:block;}
         <option>Term A</option><option>Term B</option><option>Term C</option>
       </select>
     </div>
+    <div class="inp-grp">
+      <label>Nom du jury *</label>
+      <input type="text" id="s-jury" placeholder="Prénom Nom du jury" autocomplete="off" autocapitalize="words">
+    </div>
     <button class="btn-commencer" id="btn-commencer">▶ COMMENCER</button>
   </div>
 </div>
@@ -757,9 +761,11 @@ document.getElementById('btn-ident-back').addEventListener('click', function(){ 
 document.getElementById('btn-commencer').addEventListener('click', function(){
   var p=document.getElementById('s-prenom').value.trim();
   var c=document.getElementById('s-classe').value;
+  var jury=document.getElementById('s-jury').value.trim();
   if (!p){ showToast('⚠️ Entre ton prénom !','org'); return; }
   if (!c){ showToast('⚠️ Sélectionne ta classe !','org'); return; }
-  S.prenom=p; S.nom=document.getElementById('s-nom').value.trim(); S.classe=c;
+  if (!jury){ showToast('⚠️ Entre le nom du jury !','org'); return; }
+  S.prenom=p; S.nom=document.getElementById('s-nom').value.trim(); S.classe=c; S.jury=jury;
   S.seqIdx=0; S.phase='idle'; S.sequences=[];
   S.nbSeq = getNbSeq(c);
   S.modeInverse = estPremiere(c); // true = Tir→Course (1ères)
@@ -768,7 +774,7 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
   goPage('p-seq');
   var typeLabel = S.modeInverse ? '▶ DÉMARRER TIR 1' : '▶ DÉMARRER LA COURSE';
   var modeLabel = S.modeInverse ? '🎯 Biathlon — Tir en premier' : '🏃 Biathlon — Course en premier';
-  document.getElementById('seq-eleve-lbl').textContent=p+(S.nom?' '+S.nom:'')+' · '+c;
+  document.getElementById('seq-eleve-lbl').textContent=p+(S.nom?' '+S.nom:'')+' · '+c+' · Jury : '+jury;
   // Réinitialiser la vue détail
   document.getElementById('seq-main-view').style.display='';
   document.getElementById('detail-view').classList.remove('show');
@@ -1106,6 +1112,7 @@ document.getElementById('btn-envoyer').addEventListener('click', function(){
   var now=new Date();
   var rec={
     id:Date.now(), prenom:S.prenom, nom:S.nom, classe:S.classe,
+    jury: S.jury||'',
     mode: S.modeInverse ? '1ere' : 'term',
     date:now.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}),
     heure:now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}),
@@ -1459,7 +1466,7 @@ function renderProf() {
 
   // En-tête dynamique
   var thead = document.getElementById('t-head');
-  var thH = '<tr><th>Élève</th><th>Classe</th><th class="c">Date/Heure</th>';
+  var thH = '<tr><th>Élève</th><th>Classe</th><th>Jury</th><th class="c">Date/Heure</th>';
   for(var j=0;j<nbSeqAffiche;j++){
     var estDernierTirSeul = (modeAffiche==='1ere' && j===nbSeqAffiche-1);
     if(modeAffiche==='1ere'){
@@ -1474,7 +1481,7 @@ function renderProf() {
 
   // Calcul nombre de colonnes pour colspan vide
   var nbColsSeq = modeAffiche==='1ere' ? (nbSeqAffiche*2 + (nbSeqAffiche-1)) : nbSeqAffiche*3;
-  var nbCols = 3 + nbColsSeq + 4;
+  var nbCols = 4 + nbColsSeq + 4; // +1 pour jury
   document.getElementById('t-stats').innerHTML=
     '<div class="stat-c"><div class="stat-n">'+n+'</div><div class="stat-l">Élèves</div></div>'+
     '<div class="stat-c"><div class="stat-n">'+mH+'/'+maxCib+'</div><div class="stat-l">Moy. cibles</div></div>'+
@@ -1513,6 +1520,7 @@ function renderProf() {
     h+='<tr onclick="ouvrirModalEleve(\''+encodeURIComponent(r.prenom+' '+(r.nom||'').trim())+'\')" style="cursor:pointer">';
     h+='<td><span class="sn">'+r.prenom+' '+(r.nom||'')+'</span></td>';
     h+='<td><span class="ct">'+r.classe+'</span></td>';
+    h+='<td style="font-size:.78rem;color:#555">'+(r.jury||'—')+'</td>';
     h+='<td class="c" style="color:#888;font-size:.72rem">'+(r.date||'--')+'<br>'+r.heure+'</td>';
     // Séquences — afficher selon le mode de l'élève
     for (var j=0;j<nbSeqAffiche;j++){
@@ -1553,7 +1561,7 @@ function exportCSV() {
     var m = filt[i].mode || (estPremiere(filt[i].classe)?'1ere':'term');
     if(m==='1ere' && maxSeq<4) maxSeq=4;
   }
-  var csvHead='"Prénom";"Nom";"Classe";"Mode";"Date";"Heure"';
+  var csvHead='"Prénom";"Nom";"Classe";"Jury";"Mode";"Date";"Heure"';
   for(var j=0;j<maxSeq;j++) csvHead+=';\"Course '+(j+1)+'\";"Tir '+(j+1)+'\";"Cibles '+(j+1)+'"';
   csvHead+=';"Tot.Course";"Tot.Tir";"Tot.Cibles";"Tps Total"\r\n';
 
@@ -1568,7 +1576,7 @@ function exportCSV() {
     var r=filt[i];
     var rMode=r.mode||(estPremiere(r.classe)?'1ere':'term');
     var rNbSeq=rMode==='1ere'?4:3;
-    csv+='"'+r.prenom+'";"'+(r.nom||'')+'\";"'+r.classe+'";"'+rMode+'";"'+(r.date||'')+'\";"'+r.heure+'"';
+    csv+='"'+r.prenom+'";"'+(r.nom||'')+'\";"'+r.classe+'";"'+(r.jury||'')+'\";"'+rMode+'";"'+(r.date||'')+'\";"'+r.heure+'"';
     for(var j=0;j<maxSeq;j++){
       var sq=r.sequences&&r.sequences[j]?r.sequences[j]:null;
       csv+=sq?';"'+tCsv(sq.course)+'\";"'+tCsv(sq.tir)+'\";"'+(sq.cibles||0)+'/5"':';"-";"-";"-"';
