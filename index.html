@@ -486,7 +486,7 @@ canvas.evo-chart{max-width:100%;display:block;}
         <select class="sel" id="t-filter-date"><option value="">Toutes les dates</option></select>
         <select class="sel" id="t-filter-eleve"><option value="">Tous les élèves</option></select>
         <button class="bsm org" id="btn-export">⬇️ CSV</button>
-        <button class="bsm red" id="btn-vider">🗑️ Vider</button>
+        <button class="bsm red" id="btn-vider-select">🗑️ Supprimer...</button>
       </div>
       <div class="tbl-w">
         <table>
@@ -536,6 +536,19 @@ canvas.evo-chart{max-width:100%;display:block;}
   </div>
 </div>
 
+<!-- MODAL SUPPRESSION CIBLÉE -->
+<div class="modal-bg" id="modal-suppr">
+  <div class="modal-sheet" style="max-height:60vh;">
+    <button class="modal-close" id="modal-suppr-close">✕</button>
+    <div class="modal-title">🗑️ Supprimer des données</div>
+    <div style="display:flex;flex-direction:column;gap:.7rem;margin-top:.5rem;">
+      <button class="btn-blue" id="btn-suppr-eleve" style="background:#e63946;">Supprimer l'élève sélectionné</button>
+      <button class="btn-blue" id="btn-suppr-classe" style="background:#f77f00;">Supprimer la classe sélectionnée</button>
+      <button class="btn-blue" id="btn-suppr-tout" style="background:#1a3a5c;">Supprimer TOUT</button>
+    </div>
+    <p id="suppr-info" style="font-size:.8rem;color:#888;margin-top:.8rem;text-align:center;"></p>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -784,7 +797,11 @@ document.getElementById('btn-commencer').addEventListener('click', function(){
   majDots(); majRecap();
   resetChronoUI();
   setBtn('green', S.modeInverse ? '▶ DÉMARRER TIR 1' : '▶ DÉMARRER LA COURSE');
-  document.getElementById('btn-envoyer').style.display='none';
+  // Remettre le bouton envoyer à zéro (bug 2ème passage)
+  var btnEnv = document.getElementById('btn-envoyer');
+  btnEnv.disabled = false;
+  btnEnv.textContent = '✅ ENVOYER MES RÉSULTATS';
+  btnEnv.style.display='none';
   document.getElementById('btn-action').style.display='block';
 });
 
@@ -1377,23 +1394,90 @@ function setClasseTab(classe) {
   renderProf();
 }
 
+function normNom(prenom, nom) {
+  return ((prenom||'').trim()+' '+(nom||'').trim()).toLowerCase().replace(/\s+/g,' ').trim();
+}
+
 function getArr(classeF, dateF, eleveF) {
   var arr=[];
   for (var k in allData) arr.push(allData[k]);
   if (classeF) arr=arr.filter(function(r){return r.classe===classeF;});
   if (dateF)   arr=arr.filter(function(r){return r.date===dateF;});
-  if (eleveF)  arr=arr.filter(function(r){return (r.prenom+' '+(r.nom||'')).trim()===eleveF;});
+  if (eleveF)  arr=arr.filter(function(r){ return normNom(r.prenom,r.nom)===eleveF.toLowerCase(); });
   return arr;
 }
 
 document.getElementById('t-filter-date').addEventListener('change', renderProf);
 document.getElementById('t-filter-eleve').addEventListener('change', renderProf);
 document.getElementById('btn-export').addEventListener('click', exportCSV);
-document.getElementById('btn-vider').addEventListener('click', function(){
-  if (confirm('Supprimer TOUS les résultats ?')) {
-    viderFirebase(); allData={}; renderProf(); showToast('🗑️ Données supprimées','red');
-  }
+
+// Bouton ouvrir modal suppression
+document.getElementById('btn-vider-select').addEventListener('click', function(){
+  var eleveSel = document.getElementById('t-filter-eleve').value;
+  var classeSel = _classeActive;
+  var info = '';
+  if (eleveSel) info = 'Élève sélectionné : '+eleveSel;
+  else if (classeSel) info = 'Classe sélectionnée : '+classeSel;
+  else info = 'Aucun filtre actif — "Supprimer l\'élève" et "Supprimer la classe" sont désactivés';
+  document.getElementById('suppr-info').textContent = info;
+  document.getElementById('btn-suppr-eleve').disabled = !eleveSel;
+  document.getElementById('btn-suppr-classe').disabled = !classeSel;
+  document.getElementById('modal-suppr').classList.add('open');
 });
+document.getElementById('modal-suppr-close').addEventListener('click', function(){
+  document.getElementById('modal-suppr').classList.remove('open');
+});
+document.getElementById('modal-suppr').addEventListener('click', function(e){
+  if(e.target===this) this.classList.remove('open');
+});
+
+document.getElementById('btn-suppr-eleve').addEventListener('click', function(){
+  var eleveSel = document.getElementById('t-filter-eleve').value;
+  if (!eleveSel) return;
+  if (!confirm('Supprimer toutes les données de "'+eleveSel+'" ?')) return;
+  supprimerEntrees(function(r){ return normNom(r.prenom,r.nom)===eleveSel; });
+  document.getElementById('modal-suppr').classList.remove('open');
+  showToast('🗑️ Élève supprimé','red');
+});
+
+document.getElementById('btn-suppr-classe').addEventListener('click', function(){
+  var classeSel = _classeActive;
+  if (!classeSel) return;
+  if (!confirm('Supprimer toutes les données de la classe "'+classeSel+'" ?')) return;
+  supprimerEntrees(function(r){ return r.classe===classeSel; });
+  document.getElementById('modal-suppr').classList.remove('open');
+  showToast('🗑️ Classe supprimée','red');
+});
+
+document.getElementById('btn-suppr-tout').addEventListener('click', function(){
+  if (!confirm('Supprimer TOUTES les données ? (irréversible)')) return;
+  viderFirebase(); allData={}; renderProf();
+  document.getElementById('modal-suppr').classList.remove('open');
+  showToast('🗑️ Tout supprimé','red');
+});
+
+// Supprime les entrées Firebase/local qui matchent le prédicat
+function supprimerEntrees(predicat) {
+  // Supprimer dans Firebase
+  if (firebaseOK && db) {
+    for (var k in allData) {
+      if (predicat(allData[k])) {
+        try { dbRef.child(k).remove(); } catch(e){}
+      }
+    }
+  }
+  // Supprimer en local
+  try {
+    var local = lireLocal();
+    var filtered = local.filter(function(r){ return !predicat(r); });
+    localStorage.setItem(KEY, JSON.stringify(filtered));
+  } catch(e){}
+  // Mettre à jour allData localement
+  for (var k in allData) {
+    if (predicat(allData[k])) delete allData[k];
+  }
+  renderProf();
+}
 
 function syncEleveFilter() {
   var arr=getArr(_classeActive,'','');
@@ -1405,17 +1489,22 @@ function syncEleveFilter() {
   var dateSel=dateEl.value;
   dateEl.innerHTML='<option value="">Toutes les dates</option>';
   for (var i=0;i<dates.length;i++) dateEl.innerHTML+='<option'+(dates[i]===dateSel?' selected':'')+'>'+dates[i]+'</option>';
-  // Élèves
-  var eleves=[];
+  // Élèves — dédoublonner par nom normalisé
+  var elevesNorm=[], elevesDisplay=[];
   for (var i=0;i<arr.length;i++){
-    var en=(arr[i].prenom+' '+(arr[i].nom||'')).trim();
-    if(eleves.indexOf(en)<0) eleves.push(en);
+    var norm = normNom(arr[i].prenom, arr[i].nom);
+    if(elevesNorm.indexOf(norm)<0){
+      elevesNorm.push(norm);
+      // Afficher en propre : prénom nom avec première lettre maj
+      var display = (arr[i].prenom||'').trim()+' '+(arr[i].nom||'').trim();
+      elevesDisplay.push({norm:norm, display:display});
+    }
   }
-  eleves.sort();
+  elevesDisplay.sort(function(a,b){ return a.norm<b.norm?-1:a.norm>b.norm?1:0; });
   var eleveEl=document.getElementById('t-filter-eleve');
   var eleveSel=eleveEl.value;
   eleveEl.innerHTML='<option value="">Tous les élèves</option>';
-  for (var i=0;i<eleves.length;i++) eleveEl.innerHTML+='<option'+(eleves[i]===eleveSel?' selected':'')+'>'+eleves[i]+'</option>';
+  for (var i=0;i<elevesDisplay.length;i++) eleveEl.innerHTML+='<option value="'+elevesDisplay[i].norm+'"'+(elevesDisplay[i].norm===eleveSel?' selected':'')+'>'+elevesDisplay[i].display+'</option>';
 }
 
 function majCompteursTabs() {
@@ -1606,7 +1695,7 @@ function ouvrirModalEleve(encodedName) {
   // Récupérer toutes les sessions de cet élève (toutes dates)
   var allArr=[]; for(var k in allData) allArr.push(allData[k]);
   var sessions=allArr.filter(function(r){
-    return r.prenom===prenom && (r.nom||'')===(nom||'');
+    return normNom(r.prenom,r.nom)===normNom(prenom,nom);
   });
   sessions.sort(function(a,b){ return (a.date+a.heure)<(b.date+b.heure)?-1:1; });
 
