@@ -514,6 +514,7 @@ canvas.evo-chart{max-width:100%;display:block;}
         <select class="sel" id="evo-filter-eleve" style="flex:2">
           <option value="">-- Sélectionner un élève --</option>
         </select>
+        <button class="bsm blue" id="btn-print-evo" onclick="imprimerEvo()" style="background:#1a3a5c;display:none;">🖨️ Imprimer</button>
       </div>
       <div id="evo-content">
         <div class="evo-card">
@@ -1814,10 +1815,13 @@ document.getElementById('evo-filter-eleve').addEventListener('change', renderEvo
 function renderEvo() {
   var eSel=document.getElementById('evo-filter-eleve').value;
   var cont=document.getElementById('evo-content');
+  var btnPrint=document.getElementById('btn-print-evo');
   if (!eSel) {
     cont.innerHTML='<div class="evo-card"><div style="text-align:center;padding:2rem;color:#aaa;font-size:.9rem;">📊 Sélectionnez un élève</div></div>';
+    btnPrint.style.display='none';
     return;
   }
+  btnPrint.style.display='block';
   var parts=eSel.trim().split(' ');
   var prenom=parts[0], nom=parts.slice(1).join(' ');
   var allArr=[]; for(var k in allData) allArr.push(allData[k]);
@@ -1883,7 +1887,130 @@ function renderEvo() {
   }, 50);
 }
 
-/* ── GRAPHIQUES CANVAS (sans lib, cross-browser) ────────────── */
+/* ── IMPRESSION ÉVOLUTION ────────────────────────────────────── */
+function imprimerEvo() {
+  var eSel = document.getElementById('evo-filter-eleve').value;
+  if (!eSel) { showToast('Sélectionnez un élève','org'); return; }
+
+  // Récupérer les canvas sous forme d'images
+  var canvasTemps   = document.getElementById('chart-temps');
+  var canvasCibles  = document.getElementById('chart-cibles');
+  var imgTemps   = canvasTemps  ? canvasTemps.toDataURL('image/png')  : '';
+  var imgCibles  = canvasCibles ? canvasCibles.toDataURL('image/png') : '';
+
+  // Récupérer le contenu HTML du tableau détail
+  var contenu = document.getElementById('evo-content');
+  var tableHtml = '';
+  var tables = contenu ? contenu.querySelectorAll('table') : [];
+  if (tables.length) tableHtml = tables[0].outerHTML;
+
+  // Récupérer les sessions
+  var allArr=[]; for(var k in allData) allArr.push(allData[k]);
+  var sessions = allArr.filter(function(r){
+    return normNom(r.prenom,r.nom) === normNom(eSel.split(' ')[0], eSel.split(' ').slice(1).join(' '));
+  });
+  sessions.sort(function(a,b){ return (a.date+a.heure)<(b.date+b.heure)?-1:1; });
+
+  var classe = sessions.length ? sessions[0].classe : '';
+  var dateImpression = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  var win = window.open('','_blank','width=900,height=700');
+  win.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">');
+  win.document.write('<title>Évolution — '+eSel+'</title>');
+  win.document.write('<style>');
+  win.document.write('*{margin:0;padding:0;box-sizing:border-box;}');
+  win.document.write('body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:18px;background:#fff;}');
+  win.document.write('.entete{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;border-bottom:2px solid #1a3a5c;padding-bottom:10px;}');
+  win.document.write('.entete-nom{font-size:18px;font-weight:900;color:#1a3a5c;}');
+  win.document.write('.entete-meta{font-size:11px;color:#555;text-align:right;line-height:1.6;}');
+  win.document.write('.section{margin-bottom:14px;}');
+  win.document.write('.section-titre{font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#1a3a5c;margin-bottom:6px;border-left:3px solid #f77f00;padding-left:6px;}');
+  win.document.write('.charts{display:flex;gap:12px;margin-bottom:14px;}');
+  win.document.write('.chart-box{flex:1;border:1px solid #dde;border-radius:6px;padding:8px;}');
+  win.document.write('.chart-box img{width:100%;height:auto;display:block;}');
+  win.document.write('table{width:100%;border-collapse:collapse;font-size:11px;}');
+  win.document.write('thead{background:#1a3a5c;color:#fff;}');
+  win.document.write('thead th{padding:5px 6px;font-weight:700;text-align:left;}');
+  win.document.write('thead th.c{text-align:center;}');
+  win.document.write('tbody tr:nth-child(even){background:#f5f9ff;}');
+  win.document.write('tbody td{padding:4px 6px;border-bottom:1px solid #e0e8f0;color:#1a3a5c;}');
+  win.document.write('tbody td.c{text-align:center;}');
+  win.document.write('.pill{display:inline-block;padding:1px 5px;border-radius:8px;font-weight:700;font-size:10px;}');
+  win.document.write('.pill.good{background:#d4f5df;color:#1a7a35;}');
+  win.document.write('.pill.mid{background:#fff3cd;color:#856404;}');
+  win.document.write('.pill.low{background:#fde8e8;color:#a01c28;}');
+  win.document.write('.delta{display:inline-block;padding:1px 4px;border-radius:4px;font-weight:700;font-size:10px;}');
+  win.document.write('.delta.better{color:#1a7a35;background:#d4f5df;}');
+  win.document.write('.delta.worse{color:#a01c28;background:#fde8e8;}');
+  win.document.write('.delta.same{color:#666;background:#f0f0f0;}');
+  win.document.write('.footer{margin-top:16px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px;}');
+  win.document.write('@media print{body{padding:10px;}@page{size:A4;margin:12mm;}}');
+  win.document.write('</style></head><body>');
+
+  // En-tête
+  win.document.write('<div class="entete">');
+  win.document.write('<div><div class="entete-nom">'+eSel+'</div>');
+  win.document.write('<div style="font-size:12px;color:#555;margin-top:3px;">'+classe+' · '+sessions.length+' séance(s)</div></div>');
+  win.document.write('<div class="entete-meta">Biathlon EPS<br>Évolution des performances<br>Imprimé le '+dateImpression+'</div>');
+  win.document.write('</div>');
+
+  // Graphiques
+  if (imgTemps || imgCibles) {
+    win.document.write('<div class="charts">');
+    if (imgTemps) {
+      win.document.write('<div class="chart-box"><div class="section-titre">Temps (secondes)</div>');
+      win.document.write('<img src="'+imgTemps+'"></div>');
+    }
+    if (imgCibles) {
+      win.document.write('<div class="chart-box"><div class="section-titre">Cibles touchées</div>');
+      win.document.write('<img src="'+imgCibles+'"></div>');
+    }
+    win.document.write('</div>');
+  }
+
+  // Tableau comparatif séance à séance
+  if (sessions.length >= 2) {
+    win.document.write('<div class="section"><div class="section-titre">Évolution séance à séance</div>');
+    win.document.write('<table><thead><tr>');
+    win.document.write('<th>Séance</th><th class="c">Tot.Course</th><th class="c">Δ</th>');
+    win.document.write('<th class="c">Tot.Tir</th><th class="c">Δ</th>');
+    win.document.write('<th class="c">Cibles</th><th class="c">Δ</th>');
+    win.document.write('<th class="c">Tps Total</th><th class="c">Δ</th>');
+    win.document.write('</tr></thead><tbody>');
+    var maxCib = sessions[0] && sessions[0].sequences ? sessions[0].sequences.length*5 : 15;
+    for (var i=0;i<sessions.length;i++) {
+      var s=sessions[i], prev=i>0?sessions[i-1]:null;
+      var dc=prev?deltaTemps(s.totCourse,prev.totCourse):'';
+      var dt=prev?deltaTemps(s.totTir,prev.totTir):'';
+      var dh=prev?deltaCibles(s.totCibles,prev.totCibles):'';
+      var dtt=prev?deltaTemps(s.totTemps,prev.totTemps):'';
+      var pillC=s.totCibles>=(maxCib*0.8)?'good':s.totCibles>=(maxCib*0.5)?'mid':'low';
+      win.document.write('<tr>');
+      win.document.write('<td><b>S'+(i+1)+'</b> '+s.date+' <span style="font-size:10px;color:#888">'+s.heure+'</span></td>');
+      win.document.write('<td class="c">'+s.totCourse+'</td><td class="c">'+dc+'</td>');
+      win.document.write('<td class="c">'+s.totTir+'</td><td class="c">'+dt+'</td>');
+      win.document.write('<td class="c"><span class="pill '+pillC+'">'+s.totCibles+'/'+maxCib+'</span></td><td class="c">'+dh+'</td>');
+      win.document.write('<td class="c">'+s.totTemps+'</td><td class="c">'+dtt+'</td>');
+      win.document.write('</tr>');
+    }
+    win.document.write('</tbody></table></div>');
+  }
+
+  // Tableau détail séquences
+  if (tableHtml) {
+    win.document.write('<div class="section"><div class="section-titre">Détail par séquence</div>');
+    win.document.write(tableHtml);
+    win.document.write('</div>');
+  }
+
+  win.document.write('<div class="footer">Biathlon EPS · '+eSel+' · '+classe+'</div>');
+  win.document.write('</body></html>');
+  win.document.close();
+
+  // Attendre le rendu puis lancer l'impression
+  win.onload = function(){ win.print(); };
+  setTimeout(function(){ if(win && !win.closed) win.print(); }, 600);
+}
 function drawLineChart(canvasId, labels, series, fmtY, minY, maxY) {
   var canvas=document.getElementById(canvasId);
   if(!canvas) return;
