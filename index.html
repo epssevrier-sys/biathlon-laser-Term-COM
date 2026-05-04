@@ -1802,15 +1802,20 @@ function majEvoEleveFiltres() {
   var classeSel=document.getElementById('evo-filter-classe').value;
   var allArr=[]; for(var k in allData) allArr.push(allData[k]);
   if(classeSel) allArr=allArr.filter(function(r){return r.classe===classeSel;});
-  var eleves=[]; for(var i=0;i<allArr.length;i++){
-    var en=(allArr[i].prenom+' '+(allArr[i].nom||'')).trim();
-    if(eleves.indexOf(en)<0) eleves.push(en);
+  var elevesNorm=[], elevesDisplay=[];
+  for(var i=0;i<allArr.length;i++){
+    var norm=normNom(allArr[i].prenom, allArr[i].nom);
+    if(elevesNorm.indexOf(norm)<0){
+      elevesNorm.push(norm);
+      var display=(allArr[i].prenom||'').trim()+' '+(allArr[i].nom||'').trim();
+      elevesDisplay.push({norm:norm, display:display});
+    }
   }
-  eleves.sort();
+  elevesDisplay.sort(function(a,b){ return a.norm<b.norm?-1:a.norm>b.norm?1:0; });
   var eEl=document.getElementById('evo-filter-eleve');
   var eSel=eEl.value;
   eEl.innerHTML='<option value="">-- Sélectionner un élève --</option>';
-  for(var i=0;i<eleves.length;i++) eEl.innerHTML+='<option'+(eleves[i]===eSel?' selected':'')+'>'+eleves[i]+'</option>';
+  for(var i=0;i<elevesDisplay.length;i++) eEl.innerHTML+='<option value="'+elevesDisplay[i].norm+'"'+(elevesDisplay[i].norm===eSel?' selected':'')+'>'+elevesDisplay[i].display+'</option>';
 }
 
 document.getElementById('evo-filter-classe').addEventListener('change', function(){ majEvoEleveFiltres(); renderEvo(); });
@@ -1826,10 +1831,8 @@ function renderEvo() {
     return;
   }
   btnPrint.style.display='block';
-  var parts=eSel.trim().split(' ');
-  var prenom=parts[0], nom=parts.slice(1).join(' ');
   var allArr=[]; for(var k in allData) allArr.push(allData[k]);
-  var sessions=allArr.filter(function(r){ return r.prenom===prenom&&(r.nom||'')===(nom||''); });
+  var sessions=allArr.filter(function(r){ return normNom(r.prenom,r.nom)===eSel; });
   sessions.sort(function(a,b){ return (a.date+a.heure)<(b.date+b.heure)?-1:1; });
 
   if (sessions.length===0) {
