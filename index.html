@@ -1846,7 +1846,14 @@ function renderEvo() {
   var dataTotal=sessions.map(function(s){ return mmss2s(s.totTemps); });
   var dataCibles=sessions.map(function(s){ return s.totCibles; });
 
-  var h='<div style="font-size:.9rem;font-weight:900;color:#1a3a5c;margin-bottom:1rem;">'+eSel+' — '+sessions.length+' séance(s)</div>';
+  // Détecter le mode depuis les données
+  var modeEleve = sessions[0].mode || (estPremiere(sessions[0].classe)?'1ere':'term');
+  var estPrem = (modeEleve==='1ere');
+  var nbSeqEleve = estPrem ? 4 : 3;
+  var maxCibEleve = estPrem ? 20 : 15;
+
+  var nomAffiche = sessions[0].prenom+' '+(sessions[0].nom||'');
+  var h='<div style="font-size:.9rem;font-weight:900;color:#1a3a5c;margin-bottom:1rem;">'+nomAffiche+' — '+sessions.length+' séance(s)</div>';
 
   // Graph temps
   h+='<div class="evo-card">';
@@ -1855,25 +1862,46 @@ function renderEvo() {
 
   // Graph cibles
   h+='<div class="evo-card" style="margin-top:0">';
-  h+='<div class="evo-card-title">🎯 Cibles touchées / 15</div>';
+  h+='<div class="evo-card-title">🎯 Cibles touchées / '+maxCibEleve+'</div>';
   h+='<div class="chart-wrap"><canvas id="chart-cibles" height="150"></canvas></div></div>';
 
-  // Tableau résumé
+  // Tableau résumé — en-tête dynamique selon le mode
   h+='<div class="evo-card" style="margin-top:0;overflow-x:auto">';
   h+='<div class="evo-card-title">📋 Détail par séquence</div>';
-  h+='<table class="comp-table"><thead><tr>'
-    +'<th>Séance</th><th class="c">C1</th><th class="c">T1</th><th class="c">🎯1</th>'
-    +'<th class="c">C2</th><th class="c">T2</th><th class="c">🎯2</th>'
-    +'<th class="c">C3</th><th class="c">T3</th><th class="c">🎯3</th>'
-    +'<th class="c">Total</th></tr></thead><tbody>';
+  h+='<table class="comp-table"><thead><tr><th>Séance</th>';
+  if (estPrem) {
+    // 1ères : T1/🎯1/C1 / T2/🎯2/C2 / T3/🎯3/C3 / T4/🎯4
+    for(var j=0;j<4;j++){
+      var dernierTir=(j===3);
+      h+='<th class="c">T'+(j+1)+'</th><th class="c">🎯'+(j+1)+'</th>';
+      if(!dernierTir) h+='<th class="c">C'+(j+1)+'</th>';
+    }
+  } else {
+    // Terminales : C1/T1/🎯1 / C2/T2/🎯2 / C3/T3/🎯3
+    for(var j=0;j<3;j++){
+      h+='<th class="c">C'+(j+1)+'</th><th class="c">T'+(j+1)+'</th><th class="c">🎯'+(j+1)+'</th>';
+    }
+  }
+  h+='<th class="c">Total</th></tr></thead><tbody>';
+
   for (var i=0;i<sessions.length;i++){
     var s=sessions[i];
     h+='<tr><td style="white-space:nowrap"><b>S'+(i+1)+'</b> '+s.date+'</td>';
-    for(var j=0;j<3;j++){
-      var sq=s.sequences[j];
-      h+='<td class="c" style="font-size:.72rem">'+sq.course+'</td>'
-        +'<td class="c" style="font-size:.72rem">'+sq.tir+'</td>'
-        +'<td class="c"><span class="pill '+(sq.cibles>=4?'good':sq.cibles>=2?'mid':'low')+'">'+sq.cibles+'</span></td>';
+    for(var j=0;j<nbSeqEleve;j++){
+      var sq=s.sequences&&s.sequences[j]?s.sequences[j]:null;
+      var dernierTir=estPrem&&(j===nbSeqEleve-1);
+      if(!sq){
+        h+='<td class="c">—</td><td class="c">—</td>';
+        if(!dernierTir) h+='<td class="c">—</td>';
+      } else if(estPrem){
+        h+='<td class="c" style="font-size:.72rem">'+sq.tir+'</td>'
+          +'<td class="c"><span class="pill '+(sq.cibles>=4?'good':sq.cibles>=2?'mid':'low')+'">'+sq.cibles+'</span></td>';
+        if(!dernierTir) h+='<td class="c" style="font-size:.72rem">'+(sq.course!=='--'?sq.course:'—')+'</td>';
+      } else {
+        h+='<td class="c" style="font-size:.72rem">'+sq.course+'</td>'
+          +'<td class="c" style="font-size:.72rem">'+sq.tir+'</td>'
+          +'<td class="c"><span class="pill '+(sq.cibles>=4?'good':sq.cibles>=2?'mid':'low')+'">'+sq.cibles+'</span></td>';
+      }
     }
     h+='<td class="c" style="font-weight:900">'+s.totTemps+'</td></tr>';
   }
@@ -1881,7 +1909,7 @@ function renderEvo() {
 
   cont.innerHTML=h;
 
-  // Dessiner les graphiques avec canvas natif (pas de lib externe)
+  // Graphiques
   setTimeout(function(){
     drawLineChart('chart-temps', labels,
       [{label:'Course',data:dataCourse,color:'#f77f00'},
@@ -1890,7 +1918,7 @@ function renderEvo() {
       function(v){ return s2mmss(v); });
     drawLineChart('chart-cibles', labels,
       [{label:'Cibles',data:dataCibles,color:'#2dc653'}],
-      null, 0, 15);
+      null, 0, maxCibEleve);
   }, 50);
 }
 
