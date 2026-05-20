@@ -486,6 +486,7 @@ canvas.evo-chart{max-width:100%;display:block;}
         <select class="sel" id="t-filter-date"><option value="">Toutes les dates</option></select>
         <select class="sel" id="t-filter-eleve"><option value="">Tous les élèves</option></select>
         <button class="bsm org" id="btn-export">⬇️ CSV</button>
+        <button class="bsm blue" onclick="imprimerTableau()" style="background:#1a3a5c;">🖨️ Imprimer</button>
         <button class="bsm red" id="btn-vider-select">🗑️ Supprimer...</button>
       </div>
       <div class="tbl-w">
@@ -872,7 +873,8 @@ function stopperCourse() {
     majRecap();
   } else {
     // ── MODE 1ÈRE : Tir déjà fait, Course termine la séquence → enregistrer ──
-    _enregistrerSequence(S.tirDureMs, courseDureMs, now);
+    // _enregistrerSequence attend (courseDureMs, tirDureMs) — on passe dans le bon ordre
+    _enregistrerSequence(courseDureMs, S.tirDureMs, now);
   }
 }
 
@@ -1820,6 +1822,88 @@ function majEvoEleveFiltres() {
 
 document.getElementById('evo-filter-classe').addEventListener('change', function(){ majEvoEleveFiltres(); renderEvo(); });
 document.getElementById('evo-filter-eleve').addEventListener('change', renderEvo);
+
+/* ── IMPRESSION TABLEAU DE BORD ─────────────────────────────── */
+function imprimerTableau() {
+  var dateSel   = document.getElementById('t-filter-date').value;
+  var eleveSel  = document.getElementById('t-filter-eleve').value;
+  var filt = getArr(_classeActive, dateSel, eleveSel);
+  if (!filt.length) { showToast('Aucun résultat à imprimer','org'); return; }
+
+  // Récupérer l'en-tête et le corps du tableau actuel
+  var theadHTML = document.getElementById('t-head').innerHTML;
+  var tbodyHTML = document.getElementById('t-body').innerHTML;
+  var statsHTML = document.getElementById('t-stats').innerHTML;
+
+  // Titre du filtre actif
+  var titre = 'Tableau de bord';
+  if (_classeActive) titre += ' — '+_classeActive;
+  if (dateSel)       titre += ' — '+dateSel;
+  if (eleveSel)      titre += ' — '+eleveSel;
+  var dateImpression = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  var win = window.open('','_blank','width=1100,height=750');
+  win.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">');
+  win.document.write('<title>'+titre+'</title>');
+  win.document.write('<style>');
+  win.document.write('*{margin:0;padding:0;box-sizing:border-box;}');
+  win.document.write('body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:14px;background:#fff;}');
+  win.document.write('.entete{display:flex;justify-content:space-between;align-items:center;');
+  win.document.write('border-bottom:2px solid #1a3a5c;padding-bottom:10px;margin-bottom:12px;}');
+  win.document.write('.entete-titre{font-size:16px;font-weight:900;color:#1a3a5c;}');
+  win.document.write('.entete-meta{font-size:10px;color:#666;text-align:right;line-height:1.7;}');
+  win.document.write('.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}');
+  win.document.write('.stat-c{border:1px solid #dde;border-radius:8px;padding:8px;text-align:center;}');
+  win.document.write('.stat-n{font-size:18px;font-weight:900;color:#1a3a5c;}');
+  win.document.write('.stat-l{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-top:2px;}');
+  win.document.write('table{width:100%;border-collapse:collapse;font-size:10px;}');
+  win.document.write('thead{background:#1a3a5c;color:#fff;}');
+  win.document.write('thead th{padding:5px 5px;font-weight:700;text-align:left;white-space:nowrap;}');
+  win.document.write('thead th.c{text-align:center;}');
+  win.document.write('tbody tr:nth-child(even){background:#f5f9ff;}');
+  win.document.write('tbody tr:hover{background:#f5f9ff;}');
+  win.document.write('tbody td{padding:4px 5px;border-bottom:1px solid #e8f0f8;color:#1a3a5c;white-space:nowrap;}');
+  win.document.write('tbody td.c{text-align:center;}');
+  win.document.write('.sn{font-weight:700;}');
+  win.document.write('.ct{font-size:9px;background:#e8f0fb;padding:1px 4px;border-radius:5px;font-weight:700;}');
+  win.document.write('.tps{font-weight:700;}');
+  win.document.write('.pill{display:inline-block;padding:1px 5px;border-radius:10px;font-weight:700;font-size:9px;}');
+  win.document.write('.pill.good{background:#d4f5df;color:#1a7a35;}');
+  win.document.write('.pill.mid{background:#fff3cd;color:#856404;}');
+  win.document.write('.pill.low{background:#fde8e8;color:#a01c28;}');
+  win.document.write('.cib-bloc{display:flex;flex-direction:column;align-items:center;gap:2px;}');
+  win.document.write('.cib-rang{display:flex;gap:2px;align-items:center;flex-wrap:wrap;justify-content:center;}');
+  win.document.write('.cib-item{display:flex;flex-direction:column;align-items:center;gap:1px;}');
+  win.document.write('.cib-pt{width:10px;height:10px;border-radius:50%;}');
+  win.document.write('.cib-pt.ok{background:#2dc653;}');
+  win.document.write('.cib-pt.ko{background:#e63946;}');
+  win.document.write('.cib-num{font-size:7px;color:#aaa;font-weight:700;}');
+  win.document.write('.cib-arrow{font-size:8px;color:#ccc;}');
+  win.document.write('.footer{margin-top:14px;font-size:9px;color:#aaa;text-align:center;');
+  win.document.write('border-top:1px solid #eee;padding-top:8px;}');
+  win.document.write('@media print{body{padding:8px;}@page{size:A4 landscape;margin:8mm;}}');
+  win.document.write('</style></head><body>');
+
+  // En-tête
+  win.document.write('<div class="entete">');
+  win.document.write('<div><div class="entete-titre">🎿 Biathlon EPS — '+titre+'</div>');
+  win.document.write('<div style="font-size:11px;color:#555;margin-top:3px;">'+filt.length+' résultat(s)</div></div>');
+  win.document.write('<div class="entete-meta">Imprimé le '+dateImpression+'</div>');
+  win.document.write('</div>');
+
+  // Stats
+  win.document.write('<div class="stats">'+statsHTML+'</div>');
+
+  // Tableau — reprend exactement le HTML généré par renderProf
+  win.document.write('<table><thead>'+theadHTML+'</thead><tbody>'+tbodyHTML+'</tbody></table>');
+
+  win.document.write('<div class="footer">Biathlon EPS · '+titre+' · Imprimé le '+dateImpression+'</div>');
+  win.document.write('</body></html>');
+  win.document.close();
+
+  win.onload = function(){ win.print(); };
+  setTimeout(function(){ if(win && !win.closed) win.print(); }, 600);
+}
 
 function renderEvo() {
   var eSel=document.getElementById('evo-filter-eleve').value;
