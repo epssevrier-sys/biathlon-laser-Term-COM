@@ -225,6 +225,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Ar
 .btn-detail-toggle:active{background:rgba(255,255,255,.2);}
 .btn-detail-toggle.active{background:rgba(0,200,240,.2);border-color:var(--cyan);color:var(--cyan);}
 
+.btn-del-row{width:28px;height:28px;border-radius:8px;border:none;cursor:pointer;
+  background:#fde8e8;color:#e63946;font-size:.9rem;display:flex;align-items:center;
+  justify-content:center;transition:background .15s;flex-shrink:0;font-family:inherit;}
+.btn-del-row:active{background:#e63946;color:#fff;}
+.btn-del-row:hover{background:#e63946;color:#fff;}
+
 /* ══════════════════════════════════════════════════════════════
    PROF
 ══════════════════════════════════════════════════════════════ */
@@ -1360,7 +1366,7 @@ function demarrerEcouteProf() {
       profListener=dbRef.on('value',function(snap){
         statusEl.className='cnx-status ok'; statusEl.textContent='🟢 Connecté';
         allData={};
-        if (snap.val()) { var raw=snap.val(); for(var k in raw) allData[k]=raw[k]; }
+        if (snap.val()) { var raw=snap.val(); for(var k in raw) { allData[k]=raw[k]; allData[k]._fbKey=k; } }
         renderProf(); majEvoFiltres();
       },function(err){
         statusEl.className='cnx-status err'; statusEl.textContent='🔴 Hors ligne';
@@ -1463,6 +1469,31 @@ document.getElementById('btn-suppr-tout').addEventListener('click', function(){
   showToast('🗑️ Tout supprimé','red');
 });
 
+// Supprime UNE SEULE entrée par sa clé Firebase
+function supprimerEntreeSingle(fbKey, encodedNom, dateHeure) {
+  var nom = decodeURIComponent(encodedNom);
+  if (!confirm('Supprimer la prestation de\n'+nom+'\ndu '+dateHeure+' ?\n\nLes autres prestations de cet élève sont conservées.')) return;
+  // Supprimer dans Firebase
+  if (firebaseOK && db && fbKey && fbKey.charAt(0)!=='l') {
+    try { dbRef.child(fbKey).remove(); } catch(e){}
+  }
+  // Supprimer en local
+  try {
+    var local = lireLocal();
+    var filtered = local.filter(function(r){ return r._fbKey!==fbKey && !(r.prenom+' '+(r.nom||'')).trim()===nom; });
+    // Fallback : supprimer par id si pas de _fbKey
+    if (fbKey.charAt(0)==='l') {
+      var idx = parseInt(fbKey.slice(1));
+      filtered = local.filter(function(r,i){ return i!==idx; });
+    }
+    localStorage.setItem(KEY, JSON.stringify(filtered));
+  } catch(e){}
+  // Supprimer de allData
+  if (allData[fbKey]) delete allData[fbKey];
+  renderProf();
+  showToast('🗑️ Prestation supprimée','red');
+}
+
 // Supprime les entrées Firebase/local qui matchent le prédicat
 function supprimerEntrees(predicat) {
   // Supprimer dans Firebase
@@ -1562,7 +1593,7 @@ function renderProf() {
 
   // En-tête dynamique
   var thead = document.getElementById('t-head');
-  var thH = '<tr><th>Élève</th><th>Classe</th><th>Jury</th><th class="c">Date/Heure</th>';
+  var thH = '<tr><th></th><th>Élève</th><th>Classe</th><th>Jury</th><th class="c">Date/Heure</th>';
   for(var j=0;j<nbSeqAffiche;j++){
     var estDernierTirSeul = (modeAffiche==='1ere' && j===nbSeqAffiche-1);
     if(modeAffiche==='1ere'){
@@ -1577,7 +1608,7 @@ function renderProf() {
 
   // Calcul nombre de colonnes pour colspan vide
   var nbColsSeq = modeAffiche==='1ere' ? (nbSeqAffiche*2 + (nbSeqAffiche-1)) : nbSeqAffiche*3;
-  var nbCols = 4 + nbColsSeq + 4; // +1 pour jury
+  var nbCols = 5 + nbColsSeq + 4; // +1 poubelle +1 jury
   document.getElementById('t-stats').innerHTML=
     '<div class="stat-c"><div class="stat-n">'+n+'</div><div class="stat-l">Élèves</div></div>'+
     '<div class="stat-c"><div class="stat-n">'+mH+'/'+maxCib+'</div><div class="stat-l">Moy. cibles</div></div>'+
@@ -1613,7 +1644,11 @@ function renderProf() {
     var rMode = r.mode || (estPremiere(r.classe)?'1ere':'term');
     var rNbSeq = rMode==='1ere' ? 4 : 3;
     var rMaxCib = rNbSeq*5;
+    var fbKey = r._fbKey || '';
     h+='<tr onclick="ouvrirModalEleve(\''+encodeURIComponent(r.prenom+' '+(r.nom||'').trim())+'\')" style="cursor:pointer">';
+    h+='<td onclick="event.stopPropagation()" style="padding:.4rem .5rem;">';
+    h+='<button class="btn-del-row" onclick="supprimerEntreeSingle(\''+fbKey+'\',\''+encodeURIComponent(r.prenom+' '+(r.nom||'').trim())+'\',\''+r.date+' '+r.heure+'\')" title="Supprimer cette prestation">🗑</button>';
+    h+='</td>';
     h+='<td><span class="sn">'+r.prenom+' '+(r.nom||'')+'</span></td>';
     h+='<td><span class="ct">'+r.classe+'</span></td>';
     h+='<td style="font-size:.78rem;color:#555">'+(r.jury||'—')+'</td>';
